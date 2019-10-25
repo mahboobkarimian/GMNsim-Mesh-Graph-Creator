@@ -16,8 +16,8 @@ The following graph-<br>
 Exported into this file:<br>
 (first the number of nodes, then the edges)<br>
 >#6<br>
-(1, 6)<br>
 (1, 4)<br>
-(2, 4)<br>
-(3, 5)<br>
+(1, 5)<br>
+(3, 4)<br>
+(2, 6)<br>
 >---
