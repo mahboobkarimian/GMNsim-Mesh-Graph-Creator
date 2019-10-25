@@ -1,5 +1,6 @@
 # graph_builder
-Cool Graph Builder with GUI
+Cool Graph Builder with GUI.<br>
+Built as input program for my [Graph Object](https://github.com/ariel-weiss/graph_object) project.
 ### Drawing Nodes:
 Click on the red canvas to draw nodes.<br>
 ### Connecting Nodes:
