@@ -35,6 +35,7 @@ class Node:
 
 
 class GBuilder:
+    # TODO: Add DoubleClick event so the nodes can be moved
 
     def __init__(self, root, width, height):
         self.root = root
@@ -45,6 +46,7 @@ class GBuilder:
         self.canvas.bind("<Button-3>", self.canvas_mouseRightClick)
         dummy_node = Node(0, 0, 0, 0, canvas_name=self.canvas)
         self.nodes = [dummy_node]
+        self.edges = []
         self.num_of_nodes = 0
 
         # 'Connecting Nodes Variables:
@@ -69,7 +71,10 @@ class GBuilder:
                 if self.connecting:
                     self.selectedNode.clicked_up()
                     if n is not self.selectedNode:
-                        self.canvas.create_line(self.selectedNode.x, self.selectedNode.y, n.x, n.y)
+                        # 'Connecting two nodes:
+                        self.canvas.create_line(self.selectedNode.x, self.selectedNode.y, n.x, n.y, arrow=tk.LAST, width=2)
+                        edge = (self.selectedNode.index,n.index)
+                        self.edges.append(edge)
                     self.connecting = False
                 else:
                     n.clicked_down()
@@ -78,9 +83,11 @@ class GBuilder:
 
     def clear(self):
         self.canvas.delete("all")
-        # 'Re-setting nodes:
-        dummy_node = Node(0, 0, 0, 0, canvas_name=self.canvas)
         self.nodes.clear()
+        self.edges.clear()
+
+        # 'Reset nodes:
+        dummy_node = Node(0, 0, 0, 0, canvas_name=self.canvas)
         self.nodes = [dummy_node]
         self.num_of_nodes = 0
 
@@ -88,18 +95,34 @@ class GBuilder:
         self.connecting = False
         self.selectedNode = dummy_node
 
-    # TODO: Add DoubleClick event so the nodes can be moved
+    def export(self):
+        if self.num_of_nodes < 1:
+            return
+        f = open("model.txt","w+")
+        f.write("#{0}\n".format(self.num_of_nodes))
+        for e in self.edges:
+            f.write("{0}\n".format(e))
+        f.write("---")
+        f.close()
+
 
 def main():
     _root = tk.Tk()
+    # '_root.geometry("800x500")
 
-    builder = GBuilder(_root,700,500)
+    builder = GBuilder(_root,800,500)
 
-    export_btn = tk.Button(_root,text="Export Graph")
-    export_btn.pack()
+    btn_frame = tk.Frame(_root)
+    btn_frame.pack()
 
-    clear_btn = tk.Button(_root, text="Clear", command=builder.clear())
-    clear_btn.pack()
+    export_btn = tk.Button(btn_frame,text="Export Graph",command=builder.export)
+    export_btn.pack(padx=5, pady=10, side=tk.LEFT)
+
+    clear_btn = tk.Button(btn_frame, text="Clear", command=builder.clear)
+    clear_btn.pack(padx=5, pady=10, side=tk.LEFT)
+
+    exit_btn = tk.Button(btn_frame, text="Exit")
+    exit_btn.pack(padx=5, pady=10, side=tk.LEFT)
 
     _root.mainloop()
 
