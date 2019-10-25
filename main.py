@@ -36,10 +36,11 @@ class Node:
 
 class GBuilder:
     # TODO: Add DoubleClick event so the nodes can be moved
+    # TODO: Add option the remove edge
 
     def __init__(self, root, width, height):
         self.root = root
-        self.canvas = tk.Canvas(root, height=height, widt=width, bg="red")
+        self.canvas = tk.Canvas(root, height=height, widt=width, bg="#ebe783")
         #self.canvas.place(relx = 0.1, rely = 0.1, relheight = 0.8, relwidth = 0.8)
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.canvas_mouseClick)
@@ -108,21 +109,22 @@ class GBuilder:
 
 def main():
     _root = tk.Tk()
+    _root.title("Graph Builder")
     # '_root.geometry("800x500")
-
+    _root.resizable(0,0)
+    _root.configure(background="#f2eb22")
     builder = GBuilder(_root,800,500)
 
-    btn_frame = tk.Frame(_root)
+    btn_frame = tk.Frame(_root, bg="#f2eb22")
     btn_frame.pack()
 
-    export_btn = tk.Button(btn_frame,text="Export Graph",command=builder.export)
+    p1 = tk.PhotoImage(file = "res/button_export.png")
+    export_btn = tk.Button(btn_frame, image = p1,command=builder.export)
     export_btn.pack(padx=5, pady=10, side=tk.LEFT)
 
-    clear_btn = tk.Button(btn_frame, text="Clear", command=builder.clear)
+    p2 = tk.PhotoImage(file="res/button_clear.png")
+    clear_btn = tk.Button(btn_frame, image = p2, command=builder.clear)
     clear_btn.pack(padx=5, pady=10, side=tk.LEFT)
-
-    exit_btn = tk.Button(btn_frame, text="Exit")
-    exit_btn.pack(padx=5, pady=10, side=tk.LEFT)
 
     _root.mainloop()
 
