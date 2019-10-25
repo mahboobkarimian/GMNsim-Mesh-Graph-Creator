@@ -13,3 +13,4 @@ Or, If you don't want to connect the node, right-click again on the selected nod
 Click the 'Export Graph' button to write your graph into text file.<br>
 Example for such file is in the repository (model.txt)<br>
 <p>
+![Example](/example.png)
