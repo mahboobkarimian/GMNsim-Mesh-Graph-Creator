@@ -11,7 +11,7 @@ Click the 'Export Graph' button to write your graph into text file, model.txt<br
 <br>
 ### Example:
 The following graph-<br>
-![Example](example.png?raw=true)
+![Example](res\example.png?raw=true)
 <br>
 Exported into this file:<br>
 (first the number of nodes, then the edges)<br>
