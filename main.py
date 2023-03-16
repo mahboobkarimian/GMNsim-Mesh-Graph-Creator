@@ -1,5 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import filedialog as filedialog
+from confgen import configure as SimConfGen
+import os
+import time
 
 class Node:
 
@@ -75,11 +78,6 @@ class GBuilder:
         self.nodes = [dummy_node]
         self.edges = []
         self.node_list_index = 0
-
-        self.btn_frame = tk.Canvas(root, bg="#000")
-        self.btn_frame.pack()
-        self.rrr = tk.Frame(self.btn_frame)
-        self.rrr.pack()
 
         # 'Connecting Nodes Variables:
         self.connecting = False
@@ -212,8 +210,36 @@ class GBuilder:
         f.write("---")
         f.close()
 
-
 def main():
+
+    sim_dir = ""
+    def select_dir():
+        dir = filedialog.askdirectory()
+        global sim_dir
+        if dir:
+            sim_dir = dir
+        
+    
+    def export_config():
+        print("Exporting configuration")
+        if builder.node_list_index < 1:
+            return
+        edg = []
+        for e in builder.edges:
+            anedge =(e[0],e[1])
+            edg.append(list(anedge))
+
+        # get l2 value from sim_frame
+        tunip = Tunip.get()
+        print("L2:", tunip)
+        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, True, True, tunip, None)
+        # check if file exists
+        new_name = "run_" + str(time.strftime("%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
+        with open(new_name, "w") as f:
+            f.write(complete_conf)
+            f.close()
+
+
     _root = tk.Tk()
     _root.title("Mesh Graph Builder")
     # '_root.geometry("800x500")
@@ -221,62 +247,73 @@ def main():
 
     _root.configure(background="grey98")
     
-    builder = GBuilder(_root,1200,700,"grey98")
+    builder = GBuilder(_root,1500,700,"grey98")
 
     # Create the labelframe
-    btn_frame = tk.LabelFrame(_root, text="Export Configuration", bg="grey98", height=100, width=100)
+    btn_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98", height=100)
     btn_frame.pack(side=tk.TOP, padx=5, pady=5, fill=tk.BOTH, expand=1)
-
-    lt = tk.Label(btn_frame, text="Log output:", bg="grey98", fg="#000")
-    lt.pack(padx=5, pady=10, side=tk.LEFT)
-    et = tk.Entry(btn_frame)
-    et.pack(padx=5, pady=10, side=tk.LEFT)
-
-
+    loglbl = tk.Label(btn_frame, text="Log:", bg="grey98", fg="#000")
+    loglbl.pack(padx=5, pady=10, side=tk.LEFT)
+    log = tk.Entry(btn_frame)
+    log.pack(padx=5, pady=10, side=tk.LEFT)
     varNano = tk.IntVar()
-    c = tk.Checkbutton(btn_frame, text="Nanostack", variable=varNano, bg="grey98", fg="#000")
-    c.pack(padx=1, pady=10, side=tk.LEFT)
-
+    Nano = tk.Checkbutton(btn_frame, text="IP stack log", variable=varNano, bg="grey98", fg="#000")
+    Nano.pack(padx=1, pady=10, side=tk.LEFT)
     varRadio = tk.IntVar()
-    c = tk.Checkbutton(btn_frame, text="MAC/RF", variable=varRadio, bg="grey98", fg="#000")
-    c.pack(padx=1, pady=10, side=tk.LEFT)
+    Radio = tk.Checkbutton(btn_frame, text="MAC/RF log", variable=varRadio, bg="grey98", fg="#000")
+    Radio.pack(padx=1, pady=10, side=tk.LEFT)
+    varCleartmp = tk.IntVar()
+    Cleartmp = tk.Checkbutton(btn_frame, text="Clear /tmp logs", variable=varCleartmp, bg="grey98", fg="#000")
+    Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
+    varTundev = tk.IntVar()
+    Tundev = tk.Checkbutton(btn_frame, text="Create TUN interface", variable=varTundev, bg="grey98", fg="#000")
+    Tundev.pack(padx=1, pady=10, side=tk.LEFT)
+    Tuniplbl = tk.Label(btn_frame, text="TUN IP:", bg="grey98", fg="#000")
+    Tuniplbl.pack(padx=5, pady=10, side=tk.LEFT)
+    Tunip = tk.Entry(btn_frame)
+    Tunip.insert(0, "fd12:3456::1/64")
+    Tunip.pack(padx=5, pady=10, side=tk.LEFT)
+    simDirlbl = tk.Label(btn_frame, text="Simulator location:", bg="grey98", fg="#000")
+    simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
+    select_dir_btn = tk.Button(btn_frame, command=select_dir, text="Select", bg="#BCCEF8", fg="#000")
+    select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
+    export_grf_btn = tk.Button(btn_frame, command=export_config, text="Export Config", bg="#BCCEF8", fg="#000")
+    export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    varDocker = tk.IntVar()
+    Docker = tk.Checkbutton(btn_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
+    Docker.pack(padx=1, pady=10, side=tk.LEFT)
 
-    export_btn = tk.Button(btn_frame, command=builder.export, text="Export", bg="#BCCEF8", fg="#000")
-    export_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    clear_btn = tk.Button(btn_frame, command=builder.clear, text="Clear", bg="#BCCEF8", fg="#000")
-    clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    reindex_btn = tk.Button(btn_frame, command=builder.reinddex_nodes_and_edges, text="Reorder", bg="#BCCEF8", fg="#000")
-    reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
-
-
-    sim_frame = tk.LabelFrame(_root, text="Random Mesh Generator", bg="grey98", height=100)
+    sim_frame = tk.LabelFrame(_root, text="Mesh Graph Control", bg="grey98", height=100)
     sim_frame.pack(side=tk.TOP, padx=5, pady=5, fill=tk.BOTH, expand=1)
     l1 = tk.Label(sim_frame, text="# Nodes:", bg="grey98", fg="#000")
     l1.pack(padx=5, pady=10, side=tk.LEFT)
     e1 = tk.Entry(sim_frame)
     e1.pack(padx=5, pady=10, side=tk.LEFT)
-
     l2 = tk.Label(sim_frame, text="Alpha:", bg="grey98", fg="#000")
     l2.pack(padx=5, pady=10, side=tk.LEFT)
     e2 = tk.Entry(sim_frame)
     e2.pack(padx=5, pady=10, side=tk.LEFT)
-
     l3 = tk.Label(sim_frame, text="Beta:", bg="grey98", fg="#000")
     l3.pack(padx=5, pady=10, side=tk.LEFT)
     e3 = tk.Entry(sim_frame)
     e3.pack(padx=5, pady=10, side=tk.LEFT)
-
     l4 = tk.Label(sim_frame, text="Degree:", bg="grey98", fg="#000")
     l4.pack(padx=5, pady=10, side=tk.LEFT)
     e4 = tk.Entry(sim_frame)
     e4.pack(padx=5, pady=10, side=tk.LEFT)
-
-    generate_btn = tk.Button(sim_frame, command=builder.export, text="Generate", bg="#BCCEF8", fg="#000")
+    generate_btn = tk.Button(sim_frame, command="", text="Random Graph", bg="#BCCEF8", fg="#000")
     generate_btn.pack(padx=5, pady=10, side=tk.LEFT)
+    export_btn = tk.Button(sim_frame, command=builder.export, text="Export Graph", bg="#BCCEF8", fg="#000")
+    export_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    clear_btn = tk.Button(sim_frame, command=builder.clear, text="Clear", bg="#BCCEF8", fg="#000")
+    clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    reindex_btn = tk.Button(sim_frame, command=builder.reinddex_nodes_and_edges, text="Update", bg="#BCCEF8", fg="#000")
+    reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
 
     root_width = max(builder.canvas.winfo_reqwidth(), btn_frame.winfo_reqwidth())
     root_height = builder.canvas.winfo_reqheight() + btn_frame.winfo_reqheight() + sim_frame.winfo_reqheight()
     _root.geometry(f"{root_width}x{root_height}")
+
     _root.mainloop()
 
 
