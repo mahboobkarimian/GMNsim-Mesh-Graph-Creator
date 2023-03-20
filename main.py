@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import filedialog as filedialog
-from confgen import configure as SimConfGen
-import os
 import time
+
+from confgen import configure as SimConfGen
+from daggen import random_mesh_graph_gen as RndMeshGen
+from daggen import plot_dag as RndMeshPlot
 
 class Node:
 
@@ -240,6 +242,18 @@ def main():
             f.close()
 
 
+    def get_random_mesh_graph():
+        Nnodes = int(nSimNodes.get())
+        if Nnodes < 1:
+            return
+        Alpha = alpha.get()
+        Beta = beta.get()
+        Mdegree = maxDegree.get()
+        edges = RndMeshGen(Nnodes, int(Mdegree), float(Alpha), float(Beta))
+        RndMeshPlot(edges, None)
+        return edges
+
+
     _root = tk.Tk()
     _root.title("Mesh Graph Builder")
     # '_root.geometry("800x500")
@@ -285,23 +299,27 @@ def main():
 
     sim_frame = tk.LabelFrame(_root, text="Mesh Graph Control", bg="grey98", height=100)
     sim_frame.pack(side=tk.TOP, padx=5, pady=5, fill=tk.BOTH, expand=1)
-    l1 = tk.Label(sim_frame, text="# Nodes:", bg="grey98", fg="#000")
-    l1.pack(padx=5, pady=10, side=tk.LEFT)
-    e1 = tk.Entry(sim_frame)
-    e1.pack(padx=5, pady=10, side=tk.LEFT)
-    l2 = tk.Label(sim_frame, text="Alpha:", bg="grey98", fg="#000")
-    l2.pack(padx=5, pady=10, side=tk.LEFT)
-    e2 = tk.Entry(sim_frame)
-    e2.pack(padx=5, pady=10, side=tk.LEFT)
-    l3 = tk.Label(sim_frame, text="Beta:", bg="grey98", fg="#000")
-    l3.pack(padx=5, pady=10, side=tk.LEFT)
-    e3 = tk.Entry(sim_frame)
-    e3.pack(padx=5, pady=10, side=tk.LEFT)
-    l4 = tk.Label(sim_frame, text="Degree:", bg="grey98", fg="#000")
-    l4.pack(padx=5, pady=10, side=tk.LEFT)
-    e4 = tk.Entry(sim_frame)
-    e4.pack(padx=5, pady=10, side=tk.LEFT)
-    generate_btn = tk.Button(sim_frame, command="", text="Random Graph", bg="#BCCEF8", fg="#000")
+    nSimNodeslbl = tk.Label(sim_frame, text="# Nodes:", bg="grey98", fg="#000")
+    nSimNodeslbl.pack(padx=5, pady=10, side=tk.LEFT)
+    nSimNodes = tk.Entry(sim_frame, width=5)
+    nSimNodes.insert(0, "50")
+    nSimNodes.pack(padx=5, pady=10, side=tk.LEFT)
+    alphalbl = tk.Label(sim_frame, text="Shape (branching factor):", bg="grey98", fg="#000")
+    alphalbl.pack(padx=5, pady=10, side=tk.LEFT)
+    alpha = tk.Entry(sim_frame, width=5)
+    alpha.insert(0, "1")
+    alpha.pack(padx=5, pady=10, side=tk.LEFT)
+    betalbl = tk.Label(sim_frame, text="Regularity:", bg="grey98", fg="#000")
+    betalbl.pack(padx=5, pady=10, side=tk.LEFT)
+    beta = tk.Entry(sim_frame, width=5)
+    beta.insert(0, "0.5")
+    beta.pack(padx=5, pady=10, side=tk.LEFT)
+    maxDegreelbl = tk.Label(sim_frame, text="Max RF neighbors:", bg="grey98", fg="#000")
+    maxDegreelbl.pack(padx=5, pady=10, side=tk.LEFT)
+    maxDegree = tk.Entry(sim_frame, width=5)
+    maxDegree.insert(0, "5")
+    maxDegree.pack(padx=5, pady=10, side=tk.LEFT)
+    generate_btn = tk.Button(sim_frame, command=get_random_mesh_graph, text="Random Graph", bg="#BCCEF8", fg="#000")
     generate_btn.pack(padx=5, pady=10, side=tk.LEFT)
     export_btn = tk.Button(sim_frame, command=builder.export, text="Export Graph", bg="#BCCEF8", fg="#000")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
