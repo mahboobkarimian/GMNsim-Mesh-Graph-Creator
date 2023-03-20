@@ -5,7 +5,10 @@ import time
 from confgen import configure as SimConfGen
 from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag as RndMeshPlot
+from daggen import get_pos_dag as RndGetPos
 
+############################################################
+# Class: Node
 class Node:
 
     def __init__(self, x, y, r, index, canvas_name):
@@ -60,6 +63,8 @@ class Node:
         self.canvas_name.coords(self.oval, x0, y0, x1, y1)
         self.canvas_name.coords(self.text, x, y)
 
+############################################################
+# Class: GBuilder
 class GBuilder:
     # TODO: Add DoubleClick event so the nodes can be moved
     # TODO: Add option the remove edge
@@ -95,6 +100,7 @@ class GBuilder:
         # 'Add new node:
         self.node_list_index += 1
         new_node = Node(event.x, event.y, 20, self.node_list_index, self.canvas)
+        print(event.x, event.y)
         self.nodes.append(new_node)
 
     def canvas_mouseRightClick(self, event):
@@ -188,6 +194,44 @@ class GBuilder:
                 tmp_nodes.append(n1)
         self.nodes = tmp_nodes
 
+    def draw_graph_from_list(self, num_raw_nodes, edges):
+        self.clear()
+        # edges has 0 elemnt which is considered as a dummy node here.
+        # they must start from 1 in our case, so:
+        edges = [[x+1, y+1] for x, y in edges]
+        
+        nx_pos = RndGetPos(edges)
+        pos = dict(sorted(nx_pos.items()))
+        # calculate the scale factor by checking the nuumber of nodes
+        # in the most crowded row and column:
+        max_vrtcal_nodes = [i[0] for i in list(pos.values())]
+        max_hrztal_nodes = [i[1] for i in list(pos.values())]
+        mode_v = max(set(max_vrtcal_nodes), key=max_vrtcal_nodes.count)
+        mode_h = max(set(max_hrztal_nodes), key=max_hrztal_nodes.count)
+        max_v = max_vrtcal_nodes.count(mode_v)
+        max_h = max_hrztal_nodes.count(mode_h)
+        scale_factor_v = max(max_v/6,2.15)
+        scale_factor_h = max(max_h/3,2.2)
+        # check also for ratio of the canvas
+        if (max_v/max_h) > 4:
+            scale_factor_h = scale_factor_h/2
+        #print(scale_factor_v, scale_factor_h, "max_v:", max_v, "max_h:", max_h, "mode_v:", mode_v, "mode_h:", mode_h)
+        # move coordinates center to canvas top left corner
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        for n in pos:
+            x = pos[n][0] * canvas_width/scale_factor_h + canvas_width/2
+            y = pos[n][1] * canvas_height/scale_factor_v + canvas_height/2
+            new_node = (Node(x, y, 20, n, self.canvas))
+            self.nodes.append(new_node)
+            self.node_list_index += 1
+
+        for e in edges:
+            line1 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#AAA", width=2.5)
+            line2 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#000", width=2)
+            edge = [e[0],e[1], line1, line2]
+            self.edges.append(edge)
+
     def clear(self):
         self.canvas.delete("all")
         self.nodes.clear()
@@ -212,6 +256,8 @@ class GBuilder:
         f.write("---")
         f.close()
 
+############################################################
+# Main
 def main():
 
     sim_dir = ""
@@ -250,9 +296,9 @@ def main():
         Beta = beta.get()
         Mdegree = maxDegree.get()
         edges = RndMeshGen(Nnodes, int(Mdegree), float(Alpha), float(Beta))
-        RndMeshPlot(edges, None)
+        #RndMeshPlot(edges, None) # plot the by matplotlib
+        builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         return edges
-
 
     _root = tk.Tk()
     _root.title("Mesh Graph Builder")

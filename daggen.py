@@ -98,13 +98,13 @@ def DAGs_generate(mode = 'default', n = 10, max_out = 2,alpha = 1,beta = 1.0):
     ######################################create 0 node and exit node################################
     for  node , id  in  enumerate ( into_degree ): #Add entry node as father to all nodes without edges
         if id ==0:
-            edges.append(('0',node+1))
+            edges.append((0,node+1))
             into_degree[node]+=1
 
-    for  node , od  in  enumerate ( out_degree ): #Add an exit node as a son to all nodes without outgoing edges
-        if  od  == 0 :
-            edges.append((node+1,'Exit'))
-            out_degree[node]+=1
+    #for  node , od  in  enumerate ( out_degree ): #Add an exit node as a son to all nodes without outgoing edges
+    #    if  od  == 0 :
+    #        edges.append((node+1,'Exit'))
+    #        out_degree[node]+=1
 
     #############################################plot###################################################
     return edges,into_degree,out_degree,position
@@ -130,6 +130,27 @@ def plot_dag(edges,postion):
     ax.set_title("DAG layout in topological order")
     fig.tight_layout()
     plt.show()
+
+def get_pos_dag(edges):
+    g1 = nx.DiGraph()
+    g1.add_edges_from(edges)
+    #nx.draw_networkx(g1, arrows=True, pos=postion)
+    #plt.savefig("DAG.png", format="PNG")
+    #return plt.clf
+    for layer, nodes in enumerate(nx.topological_generations(g1)):
+    # `multipartite_layout` expects the layer as a node attribute, so add the
+    # numeric layer value as a node attribute
+        for node in nodes:
+            g1.nodes[node]["layer"] = layer
+
+    # Compute the multipartite_layout using the "layer" node attribute
+    pos = nx.multipartite_layout(g1, subset_key="layer")
+    #for k in pos:
+    #    pos[k][-1] *= -1
+    #del[pos['Exit']]
+    # convert '0' to 0
+    #pos[0] = pos.pop('0')
+    return pos
 
 def search_for_successors(node, edges):
         '''
