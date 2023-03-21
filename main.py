@@ -101,6 +101,13 @@ class GBuilder:
         self.connecting = False
         self.selectedNode = dummy_node
 
+    def draw_line(self, x1, y1, x2, y2):
+        line1 = self.canvas.create_line(x1, y1, x2, y2, arrow=None, fill="#222", width=2.5)
+        line2 = self.canvas.create_line(x1, y1, x2, y2, arrow=None, fill="#222", width=2)
+        self.canvas.tag_lower(line1)
+        self.canvas.tag_lower(line2)
+        return line1, line2
+
     def canvas_mouseClick(self, event):
         if self.connecting:
             return
@@ -121,8 +128,7 @@ class GBuilder:
                     self.selectedNode.clicked_up()
                     if n is not self.selectedNode:
                         # 'Connecting two nodes:
-                        line1 = self.canvas.create_line(self.selectedNode.x, self.selectedNode.y, n.x, n.y, arrow=tk.LAST, fill="#AAA", width=2.5)
-                        line2 = self.canvas.create_line(self.selectedNode.x, self.selectedNode.y, n.x, n.y, arrow=tk.LAST, fill="#000", width=2)
+                        line1, line2 = self.draw_line(self.selectedNode.x, self.selectedNode.y, n.x, n.y)
                         edge = [self.selectedNode.index,n.index, line1, line2]
                         self.edges.append(edge)
                     self.connecting = False
@@ -154,8 +160,7 @@ class GBuilder:
                         self.canvas.delete(e[2])
                         self.canvas.delete(e[3])
                         #for e in self.edges:
-                        line1 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#AAA", width=2.5)
-                        line2 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#000", width=2)
+                        line1, line2 = self.draw_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y)
                         e[2] = line1
                         e[3] = line2
                 
@@ -238,8 +243,7 @@ class GBuilder:
             self.node_list_index += 1
 
         for e in edges:
-            line1 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#AAA", width=2.5)
-            line2 = self.canvas.create_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y, arrow=tk.LAST, fill="#000", width=2)
+            line1, line2 = self.draw_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y)
             edge = [e[0],e[1], line1, line2]
             self.edges.append(edge)
 
