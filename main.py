@@ -215,6 +215,8 @@ class GBuilder:
         # check if window size is changed:
         if self.canvas.winfo_width() != self.canvas_width+2 or self.canvas.winfo_height() != self.canvas_height+39:
             print("size:", self.canvas.winfo_width(), self.canvas.winfo_height(), self.canvas_width, self.canvas_height)
+            self.canvas_width = self.canvas.winfo_width()-2
+            self.canvas_height = self.canvas.winfo_height()-39
             self.draw_graph_from_list(self.node_list_index, self.edges)
 
 
