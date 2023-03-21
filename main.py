@@ -315,12 +315,20 @@ def main():
         if edg[0][0] != 0:
             edg = [[x-1, y-1] for x, y in edg]
 
-        # get l2 value from sim_frame
+        # Gettings options
         tunip = Tunip.get()
-        #print("IP:", tunip)
         cleanup_tmp = varCleartmp.get()
         add_tun = varTundev.get()
-        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, cleanup_tmp, add_tun, tunip, None)
+        be_logged = log.get()
+        if "e" in be_logged or be_logged == '':
+            be_logged = []
+        else:
+            be_logged = be_logged.split(",")
+        print(be_logged)
+        log_nano = varNano.get()
+        log_radio = varRadio.get()
+
+        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, cleanup_tmp, add_tun, tunip, log_nano, log_radio, be_logged, None)
         # check if file exists
         new_name = "run_" + str(time.strftime("%d_%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
         with open(new_name, "w") as f:
