@@ -186,7 +186,7 @@ class GBuilder:
                         self.canvas.delete(e[3])
                     else:
                         tmp_edges.append(e)
-                print(tmp_edges, "||||", self.edges)
+                #print(tmp_edges, "||||", self.edges)
                 self.edges = tmp_edges
                 break
 
@@ -312,15 +312,15 @@ def main():
             anedge =(e[0],e[1])
             edg.append(list(anedge))
 
-        print("L0:\n", edg)
         if edg[0][0] != 0:
             edg = [[x-1, y-1] for x, y in edg]
-            print("\nL1:", edg)
 
         # get l2 value from sim_frame
         tunip = Tunip.get()
-        print("L2:", tunip)
-        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, True, True, tunip, None)
+        #print("IP:", tunip)
+        cleanup_tmp = varCleartmp.get()
+        add_tun = varTundev.get()
+        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, cleanup_tmp, add_tun, tunip, None)
         # check if file exists
         new_name = "run_" + str(time.strftime("%d_%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
         with open(new_name, "w") as f:
@@ -355,17 +355,18 @@ def main():
     loglbl = tk.Label(sim_frame, text="Log:", bg="grey98", fg="#000")
     loglbl.pack(padx=5, pady=10, side=tk.LEFT)
     log = tk.Entry(sim_frame)
+    log.insert(0, "e.g: 1,5,6,50")
     log.pack(padx=5, pady=10, side=tk.LEFT)
-    varNano = tk.IntVar()
+    varNano = tk.IntVar(value=1)
     Nano = tk.Checkbutton(sim_frame, text="IP stack log", variable=varNano, bg="grey98", fg="#000")
     Nano.pack(padx=1, pady=10, side=tk.LEFT)
-    varRadio = tk.IntVar()
+    varRadio = tk.IntVar(value=1)
     Radio = tk.Checkbutton(sim_frame, text="MAC/RF log", variable=varRadio, bg="grey98", fg="#000")
     Radio.pack(padx=1, pady=10, side=tk.LEFT)
-    varCleartmp = tk.IntVar()
+    varCleartmp = tk.IntVar(value=1)
     Cleartmp = tk.Checkbutton(sim_frame, text="Clear /tmp logs", variable=varCleartmp, bg="grey98", fg="#000")
     Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
-    varTundev = tk.IntVar()
+    varTundev = tk.IntVar(value=1)
     Tundev = tk.Checkbutton(sim_frame, text="Create TUN interface", variable=varTundev, bg="grey98", fg="#000")
     Tundev.pack(padx=1, pady=10, side=tk.LEFT)
     Tuniplbl = tk.Label(sim_frame, text="TUN IP:", bg="grey98", fg="#000")
