@@ -8,6 +8,17 @@ from daggen import plot_dag as RndMeshPlot
 from daggen import get_pos_dag as RndGetPos
 
 ############################################################
+# Class: Theme
+class Bt(tk.Button):
+    def __init__ (self, *args, **kwargs):
+        tk.Button.__init__(self, *args, **kwargs)
+        self['bg'] = '#0078d4'
+        self['fg'] = 'white'
+        self['activebackground'] = '#1092cb'
+        self['activeforeground'] = 'white'
+        self['relief'] = tk.SOLID
+
+############################################################
 # Class: Node
 class Node:
 
@@ -335,9 +346,9 @@ def main():
     Tunip.pack(padx=5, pady=10, side=tk.LEFT)
     simDirlbl = tk.Label(sim_frame, text="Simulator location:", bg="grey98", fg="#000")
     simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
-    select_dir_btn = tk.Button(sim_frame, command=select_dir, text="Select", bg="#BCCEF8", fg="#000")
+    select_dir_btn = Bt(sim_frame, command=select_dir, text="Select")
     select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
-    export_grf_btn = tk.Button(sim_frame, command=export_config, text="Export Config", bg="#BCCEF8", fg="#000")
+    export_grf_btn = Bt(sim_frame, command=export_config, text="Export Config")
     export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
     varDocker = tk.IntVar()
     Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
@@ -365,16 +376,16 @@ def main():
     maxDegree = tk.Entry(rnd_gframe, width=5)
     maxDegree.insert(0, "5")
     maxDegree.pack(padx=5, pady=10, side=tk.LEFT)
-    generate_btn = tk.Button(rnd_gframe, command=get_random_mesh_graph, text="Random Graph", bg="#BCCEF8", fg="#000")
+    generate_btn = Bt(rnd_gframe, command=get_random_mesh_graph, text="Random Graph")
     generate_btn.pack(padx=5, pady=10, side=tk.LEFT)
 
     ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
-    export_btn = tk.Button(ctl_gframe, command=builder.export, text="Export Graph", bg="#BCCEF8", fg="#000")
+    export_btn = Bt(ctl_gframe, command=builder.export, text="Export Graph")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    clear_btn = tk.Button(ctl_gframe, command=builder.clear, text="Clear", bg="#BCCEF8", fg="#000")
+    clear_btn = Bt(ctl_gframe, command=builder.clear, text="Clear")
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    reindex_btn = tk.Button(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update", bg="#BCCEF8", fg="#000")
+    reindex_btn = Bt(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update")
     reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
 
     root_width = max(builder.canvas.winfo_reqwidth(), sim_frame.winfo_reqwidth())
@@ -382,7 +393,6 @@ def main():
     _root.geometry(f"{root_width}x{root_height}")
 
     _root.mainloop()
-
 
 if __name__ == "__main__":
     main()
