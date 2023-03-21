@@ -34,7 +34,7 @@ class Node:
         self.hidden = False
         self.canvas_name = canvas_name
         self.oval = canvas_name.create_oval(x0, y0, x1, y1,fill="gray49")
-        self.text = canvas_name.create_text(x, y, text=str(index), font=("Arial", 15), fill="white")
+        self.text = canvas_name.create_text(x, y, text=str(index-1), font=("Arial", 15), fill="white")
 
     def clicked_down(self):
         self.canvas_name.itemconfig(self.oval, fill="green")
@@ -191,10 +191,7 @@ class GBuilder:
                 break
 
     def reinddex_nodes_and_edges(self):
-        # check if window size is changed:
-        if self.canvas.winfo_width() != self.canvas_width or self.canvas.winfo_height() != self.canvas_height:
-            self.draw_graph_from_list(self.node_list_index, self.edges)
-        # 'Reindex nodes:
+        # Reindex nodes:
         tmp_nodes = []
         for n1 in self.nodes:
             if n1.hidden:
@@ -203,7 +200,8 @@ class GBuilder:
                     if n2.index > idx:
                         n2.index -= 1
                         self.canvas.delete(n2.text)
-                        n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index), font=("Arial", 15), fill="black")
+                        if not n2.hidden:
+                            n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index-1), font=("Arial", 15), fill="black")
                 for e in self.edges:
                     if e[0] > idx:
                         e[0] -= 1
@@ -214,7 +212,15 @@ class GBuilder:
                 tmp_nodes.append(n1)
         self.nodes = tmp_nodes
 
+        # check if window size is changed:
+        if self.canvas.winfo_width() != self.canvas_width+2 or self.canvas.winfo_height() != self.canvas_height+39:
+            print("size:", self.canvas.winfo_width(), self.canvas.winfo_height(), self.canvas_width, self.canvas_height)
+            self.draw_graph_from_list(self.node_list_index, self.edges)
+
+
     def draw_graph_from_list(self, num_raw_nodes, edges):
+        if edges == []:
+            return
         # Make a backup of the edges list:
         edges_copy = edges.copy()
         # Clear the canvas:
@@ -287,7 +293,7 @@ class GBuilder:
 # Main
 def main():
 
-    sim_dir = ""
+    sim_dir = "$(pwd)"
     def select_dir():
         dir = filedialog.askdirectory()
         global sim_dir
@@ -304,12 +310,17 @@ def main():
             anedge =(e[0],e[1])
             edg.append(list(anedge))
 
+        print("L0:\n", edg)
+        if edg[0][0] != 0:
+            edg = [[x-1, y-1] for x, y in edg]
+            print("\nL1:", edg)
+
         # get l2 value from sim_frame
         tunip = Tunip.get()
         print("L2:", tunip)
         complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, True, True, tunip, None)
         # check if file exists
-        new_name = "run_" + str(time.strftime("%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
+        new_name = "run_" + str(time.strftime("%d_%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
         with open(new_name, "w") as f:
             f.write(complete_conf)
             f.close()
