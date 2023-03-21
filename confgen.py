@@ -32,8 +32,8 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, options):
         config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} \"/tmp/uart{i}\" /tmp/sim_socket\""
 
     # Run Router nodes
-    for i in range(num_nodes):
-        config[f'RUN_R_{i}'] = f"{dir}/wsnode -F {dir}DIR/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_ > /dev/null 2> /dev/null &"
+    for i in range(1, num_nodes):
+        config[f'RUN_R_{i}'] = f"{dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_ > /dev/null 2> /dev/null &"
 
     # Run BR
     config['RUN_BR'] = f"gnome-terminal --window --title \"BR N0\" -- {dir}/wsbrd -F {dir}/examples/wsbrd.conf -u $(readlink /tmp/uart0)"
