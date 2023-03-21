@@ -83,9 +83,10 @@ class GBuilder:
     def __init__(self, root, width, height, bgc):
         self.root = root
         self.canvas = tk.Canvas(root, height=height, widt=width, bg=bgc)
-        #self.canvas.place(relx = 0.1, rely = 0.1, relheight = 0.8, relwidth = 0.8)
-        #self.canvas.pack()
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.canvas_width = width
+        self.canvas_height = height
 
         self.canvas.bind("<Button-1>", self.canvas_mouseClick)
         self.canvas.bind("<Button-3>", self.canvas_mouseRightClick)
@@ -190,6 +191,9 @@ class GBuilder:
                 break
 
     def reinddex_nodes_and_edges(self):
+        # check if window size is changed:
+        if self.canvas.winfo_width() != self.canvas_width or self.canvas.winfo_height() != self.canvas_height:
+            self.draw_graph_from_list(self.node_list_index, self.edges)
         # 'Reindex nodes:
         tmp_nodes = []
         for n1 in self.nodes:
@@ -211,11 +215,19 @@ class GBuilder:
         self.nodes = tmp_nodes
 
     def draw_graph_from_list(self, num_raw_nodes, edges):
+        # Make a backup of the edges list:
+        edges_copy = edges.copy()
+        # Clear the canvas:
         self.clear()
-        # edges has 0 elemnt which is considered as a dummy node here.
-        # they must start from 1 in our case, so:
-        edges = [[x+1, y+1] for x, y in edges]
-        
+
+        # edges may have 0 elemnt which is considered as a dummy node here.
+        # they must start from 1 in our case, so if it comes from rnd graph
+        # we take 2 elements, if its from update function we take 4 elements
+        if len(edges_copy[0]) > 2:
+            edges = [[x, y] for x, y, m, l in edges_copy]
+        else:
+            edges = [[x+1, y+1] for x, y in edges_copy]
+
         nx_pos = RndGetPos(edges)
         pos = dict(sorted(nx_pos.items()))
         # calculate the scale factor by checking the nuumber of nodes
