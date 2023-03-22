@@ -425,6 +425,8 @@ def main():
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
     reindex_btn = Bt(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update")
     reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    help_btn = Bt(ctl_gframe, command=None, text="HELP (?)")
+    help_btn.pack(padx=10, pady=10, side=tk.LEFT)
 
     root_width = max(builder.canvas.winfo_reqwidth(), sim_frame.winfo_reqwidth())
     root_height = builder.canvas.winfo_reqheight() + sim_frame.winfo_reqheight() + rnd_gframe.winfo_reqheight() + ctl_gframe.winfo_reqheight()
