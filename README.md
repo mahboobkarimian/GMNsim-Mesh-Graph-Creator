@@ -1,24 +1,28 @@
-# graph_builder
-Cool Graph Builder with GUI.<br>
-Built as input program for my [Graph Object](https://github.com/ariel-weiss/graph_object) project.
-### Drawing Nodes:
-Click on the red canvas to draw nodes.<br>
-### Connecting Nodes:
-Right-click on a node to enter "connecting mode".<br>
-Then right-click on another node to draw an arrow between them (connect them).<br>
-Or, If you don't want to connect the node, right-click again on the selected node to exit 'connecting mode'.<br>
-### Export Graph:
-Click the 'Export Graph' button to write your graph into text file, model.txt<br>
-<br>
-### Example:
-The following graph-<br>
-![Example](example.png?raw=true)
-<br>
-Exported into this file:<br>
-(first the number of nodes, then the edges)<br>
->#6<br>
-(1, 4)<br>
-(1, 5)<br>
-(3, 4)<br>
-(2, 6)<br>
->---
+# Mesh Graph Creator
+
+Mesh Graph Creator is a tool that provides a simple graphical interface for drawing and generating custom or random graphs. It is primarily designed to create graphs that can be used with a mesh network simulator based on the Mbed OS.
+
+
+## Drawing nodes and edges
+
+The process of creating a graph is straightforward.
+
+* Draw nodes on the blank canvas by **clicking** on it.
+
+* Connect two nodes, simply **right-click** on one node and then the other.
+
+* Delete a node and its connected edges by pressing **Ctrl + Click**.
+
+* Move a node and its edges by **double-click** and holding it.
+
+* Click the "Update" button. If you have deleted some nodes or resized the window, this button will update your graph accordingly.
+
+## Simulator
+
+The "Simulator" panel enables you to configure the simulation and logging options. By clicking on the "Export Config" button, you can export these settings along with the graph to a bash script. The bash script can be directly executed to deploy nodes in the mesh network and start the simulation.
+
+Example: `bash run_22_10_31_20_n51.sh`
+
+## Export Graph
+
+Click the 'Export Graph' button to write your graph into text file, `model.txt`
