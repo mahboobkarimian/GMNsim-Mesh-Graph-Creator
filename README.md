@@ -19,9 +19,16 @@ The process of creating a graph is straightforward.
 
 ## Simulator
 
-The "Simulator" panel enables you to configure the simulation and logging options. By clicking on the "Export Config" button, you can export these settings along with the graph to a bash script. The bash script can be directly executed to deploy nodes in the mesh network and start the simulation.
+### Run manually by script
 
+The "Simulator" panel enables you to configure the simulation and logging options. By clicking on the "Export Config" button, you can export these settings along with the graph to a bash script. The bash script can be directly executed to deploy nodes in the mesh network and start the simulation, **provided that it is copied beside the simulator executables, or the directory containing the simulation executables is selected in the app.**<br>
 Example: `bash run_22_10_31_20_n51.sh`
+
+### Run directly from the app
+
+In the app, select the simulator path by selecting the directory containing the simulation executables.<br>
+Then you can press "Start simulation" button. This will open a Terminal window where **it will ask your root password if you are not root user** to create a TUN interface.<br>
+To avaoid entering the root password, you can create a TUN interface in advance with the arbitrary IP that you want, and then uncheck the "Create TUN interface" box. Note that once you created a TUN interface, also you can uncheck this option.
 
 ## Export Graph
 
