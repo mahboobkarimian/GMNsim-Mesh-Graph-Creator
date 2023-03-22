@@ -7,6 +7,7 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, log_nano, log_radi
     if cleanup:
         config['CLEANUP'] = "rm -rf /tmp/wsbrd/\nrm -f /tmp/sim_socket /tmp/*_pae_*\nrm -f /tmp/n{1,2,3,4,5,6,7,8,9,10}*\nmkdir -p /tmp/wsbrd/"
 
+    config['CD'] = f"cd {dir}"
     # Run tun
     if add_tun:
         # enable core generation
@@ -30,14 +31,14 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, log_nano, log_radi
     # run phy/mac
     for i in range(num_nodes):
         if (log_radio and str(i) in be_logged_nodes) or (log_radio and be_logged_nodes == []):
-            config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} \"/tmp/uart{i}\" /tmp/sim_socket\""
+            config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket\""
         else:
-            config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} \"/tmp/uart{i}\" /tmp/sim_socket > /dev/null 2> /dev/null\""
+            config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket > /dev/null 2> /dev/null\""
 
     # Run Router nodes
     for i in range(1, num_nodes):
         if (log_nano and str(i) in be_logged_nodes) or (log_nano and be_logged_nodes == []):
-            config[f'RUN_R_{i}'] = f"gnome-terminal --tab --title \"R_N {i}\" -- {dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_"
+            config[f'RUN_R_{i}'] = f"gnome-terminal --window --title \"R_N {i}\" -- {dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_"
         else:
             config[f'RUN_R_{i}'] = f"{dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_ > /dev/null 2> /dev/null &"
 

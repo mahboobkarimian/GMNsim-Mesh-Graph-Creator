@@ -1,3 +1,4 @@
+import subprocess
 import tkinter as tk
 from tkinter import filedialog as filedialog
 import time
@@ -295,15 +296,12 @@ class GBuilder:
 # Main
 def main():
 
-    sim_dir = "$(pwd)"
     def select_dir():
         dir = filedialog.askdirectory()
-        global sim_dir
         if dir:
-            sim_dir = dir
-        
+            sim_path.set(dir)
     
-    def export_config():
+    def export_config(for_sim=False):
         print("Exporting configuration")
         if builder.node_list_index < 1:
             return
@@ -324,16 +322,30 @@ def main():
             be_logged = []
         else:
             be_logged = be_logged.split(",")
-        print(be_logged)
         log_nano = varNano.get()
         log_radio = varRadio.get()
 
-        complete_conf = SimConfGen(builder.node_list_index, edg, sim_dir, cleanup_tmp, add_tun, tunip, log_nano, log_radio, be_logged, None)
-        # check if file exists
-        new_name = "run_" + str(time.strftime("%d_%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
+        print("Selected directory: ", sim_path.get())
+        complete_conf = SimConfGen(builder.node_list_index, edg, sim_path.get(), cleanup_tmp, add_tun, tunip, log_nano, log_radio, be_logged, None)
+        new_name = ''
+        if for_sim:
+            new_name = "run.sh"
+            print("Running simulation")
+        else:
+            new_name = "run_" + str(time.strftime("%d_%H_%M_%S_n")) + str(builder.node_list_index) + ".sh"
         with open(new_name, "w") as f:
             f.write(complete_conf)
             f.close()
+
+    def start_sim():
+        if sim_path.get() == '$(pwd)':
+            print("Please select a directory")
+            return
+        export_config(True)
+        # Run "run.sh" script
+        subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', 'bash run.sh; exec bash'])
+
+
 
 
     def get_random_mesh_graph():
@@ -388,9 +400,12 @@ def main():
     select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
     export_grf_btn = Bt(sim_frame, command=export_config, text="Export Config")
     export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    varDocker = tk.IntVar()
-    Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
-    Docker.pack(padx=1, pady=10, side=tk.LEFT)
+    #varDocker = tk.IntVar()
+    #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
+    #Docker.pack(padx=1, pady=10, side=tk.LEFT)
+    sim_path = tk.StringVar(value="$(pwd)")
+    start_sim_btn = Bt(sim_frame, command=start_sim, text="Start simulation")
+    start_sim_btn.pack(padx=10, pady=10, side=tk.LEFT)
 
     rnd_gframe = tk.LabelFrame(_root, text="Random Mesh Graph", bg="grey98", height=100)
     rnd_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
