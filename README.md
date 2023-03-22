@@ -28,7 +28,7 @@ Example: `bash run_22_10_31_20_n51.sh`
 
 In the app, select the simulator path by selecting the directory containing the simulation executables.<br>
 Then you can press "Start simulation" button. This will open a Terminal window where **it will ask your root password if you are not root user** to create a TUN interface.<br>
-To avaoid entering the root password, you can create a TUN interface in advance with the arbitrary IP that you want, and then uncheck the "Create TUN interface" box. Note that once you created a TUN interface, also you can uncheck this option.
+To avoid entering the root password, you can create a TUN interface in advance with the arbitrary IP that you want, and then uncheck the "Create TUN interface" box. Note that once you created a TUN interface, also you can uncheck this option.
 
 ## Export Graph
 
