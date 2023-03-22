@@ -26,3 +26,10 @@ Example: `bash run_22_10_31_20_n51.sh`
 ## Export Graph
 
 Click the 'Export Graph' button to write your graph into text file, `model.txt`
+
+## Resources
+
+This application is developed based on the code from the following open-source projects.
+
+1. Random Graph generator adapted from [Random Directed Acyclic Graph Generator](https://github.com/Livioni/DAG_Generator)
+2. Original GUI [graph_builder](https://github.com/ariel-weiss/graph_builder)
