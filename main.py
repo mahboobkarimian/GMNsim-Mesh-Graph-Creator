@@ -285,10 +285,11 @@ class GBuilder:
     def export(self):
         if self.node_list_index < 1:
             return
-        f = open("model.txt","w+")
-        f.write("#{0}\n".format(self.node_list_index))
+        name = "graph_" + str(time.strftime("%d_%H_%M_%S_n")) + str(self.node_list_index) + ".txt"
+        f = open(name,"w")
+        f.write(f"{self.node_list_index}\n")
         for e in self.edges:
-            f.write("{0}\n".format(e))
+            f.write(f"{e[0]},{e[1]}\n")
         f.write("---")
         f.close()
 
