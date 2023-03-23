@@ -302,7 +302,7 @@ def main():
         if dir:
             sim_path.set(dir)
     
-    def export_config(for_sim=False):
+    def export_runscript(for_sim=False):
         print("Exporting configuration")
         if builder.node_list_index < 1:
             return
@@ -342,7 +342,7 @@ def main():
         if sim_path.get() == '$(pwd)':
             print("Please select a directory")
             return
-        export_config(True)
+        export_runscript(True)
         # Run "run.sh" script
         subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', 'bash run.sh; exec bash'])
 
@@ -362,7 +362,7 @@ def main():
         return edges
 
     _root = tk.Tk()
-    _root.title("Graph Create and Simulator tool")
+    _root.title("GMNsim") # Graph and Mesh Network Simulation Tool
     # '_root.geometry("800x500")
     _root.resizable(1,1)
 
@@ -399,7 +399,7 @@ def main():
     simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
     select_dir_btn = Bt(sim_frame, command=select_dir, text="Select")
     select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
-    export_grf_btn = Bt(sim_frame, command=export_config, text="Export config")
+    export_grf_btn = Bt(sim_frame, command=export_runscript, text="Export runscript")
     export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
     #varDocker = tk.IntVar()
     #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
