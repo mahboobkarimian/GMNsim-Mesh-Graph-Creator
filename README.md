@@ -32,7 +32,7 @@ To avoid entering the root password, you can create a TUN interface in advance w
 
 ## Export Graph
 
-Click the 'Export Graph' button to write your graph into text file, `model.txt`
+Click the 'Export Graph' button to write your graph into a text file with the format as `graph_%D_%H_%M_%S_#NODES.txt`
 
 ## Resources
 

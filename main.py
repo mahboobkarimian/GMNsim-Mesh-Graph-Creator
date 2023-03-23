@@ -362,7 +362,7 @@ def main():
         return edges
 
     _root = tk.Tk()
-    _root.title("Mesh Graph Builder")
+    _root.title("Graph Create and Simulator tool")
     # '_root.geometry("800x500")
     _root.resizable(1,1)
 
