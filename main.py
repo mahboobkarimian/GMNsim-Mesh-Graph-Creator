@@ -2,10 +2,11 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog as filedialog
 import time
+import dbus
 
 from confgen import configure as SimConfGen
 from daggen import random_mesh_graph_gen as RndMeshGen
-from daggen import plot_dag as RndMeshPlot
+from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
 
 ############################################################
@@ -294,16 +295,126 @@ class GBuilder:
         f.close()
 
 ############################################################
+# Class: Config Window
+class ConfigDialog(tk.Toplevel):
+    def __init__(self, parent, VarTundev, VarNano, VarRadio, VarLog, VarCleartmp, VarTunip):
+        super().__init__(parent)
+
+        self.title("Simulation configuration")
+        self.configure(bg="grey98")
+        self.resizable(False, False)
+        self.varTundev = VarTundev
+        self.varNano = VarNano
+        self.varRadio = VarRadio
+        self.varLog = VarLog
+        self.varCleartmp = VarCleartmp
+        self.varTunip = VarTunip
+
+        sim_frame = tk.Frame(self, bg = "grey98")
+        sim_frame.pack(side=tk.TOP, padx=5, anchor=tk.NW)
+        loglbl = tk.Label(sim_frame, text="Log:", bg="grey98", fg="#000")
+        loglbl.pack(padx=5, pady=10, side=tk.LEFT)
+        self.log = tk.Entry(sim_frame)
+        self.log.insert(0, VarLog)
+        self.log.pack(padx=5, pady=10, side=tk.LEFT)
+        
+        Nano = tk.Checkbutton(sim_frame, text="IP stack log", variable=self.varNano, bg="grey98", fg="#000")
+        Nano.pack(padx=1, pady=10, side=tk.LEFT)
+        
+        Radio = tk.Checkbutton(sim_frame, text="MAC/RF log", variable=self.varRadio, bg="grey98", fg="#000")
+        Radio.pack(padx=1, pady=10, side=tk.LEFT)
+        
+        Cleartmp = tk.Checkbutton(sim_frame, text="Clear /tmp logs", variable=self.varCleartmp, bg="grey98", fg="#000")
+        Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
+
+        sim_frame1 = tk.Frame(self, bg = "grey98")
+        sim_frame1.pack(side=tk.TOP, padx=5, anchor=tk.NW)
+        
+        Tundev = tk.Checkbutton(sim_frame1, text="Create TUN interface", variable=self.varTundev, bg="grey98", fg="#000")
+        Tundev.pack(padx=1, pady=10, side=tk.LEFT)
+        Tuniplbl = tk.Label(sim_frame1, text="TUN IP:", bg="grey98", fg="#000")
+        Tuniplbl.pack(padx=5, pady=10, side=tk.LEFT)
+        self.Tunip = tk.Entry(sim_frame1)
+        self.Tunip.insert(0, self.varTunip)
+        self.Tunip.pack(padx=5, pady=10, side=tk.LEFT)
+
+        sim_frame2 = tk.Frame(self, bg = "grey98")
+        sim_frame2.pack(side=tk.TOP, padx=5, anchor=tk.NW)
+        war_label = tk.Label(sim_frame2, text="Tip: Close this window to interact again with main window!", bg="grey98", fg="Red")
+        war_label.pack(side=tk.LEFT)
+
+
+        # create OK and Cancel buttons
+        button_frame = tk.Frame(self, bg="grey98")
+        button_frame.pack(side=tk.TOP, pady=10, padx=5, anchor=tk.SE)
+        ok_button = Bt(button_frame, text="OK", command=self.ok)
+        ok_button.pack(side=tk.RIGHT, padx=5)
+
+        cancel_button = Bt(button_frame, text="Cancel", command=self.cancel)
+        cancel_button.pack(side=tk.RIGHT, padx=5)
+
+        reset_button = Bt(button_frame, text="Reset", command=self.reset)
+        reset_button.pack(side=tk.RIGHT, padx=5)
+
+        self.result = None
+
+    def reset(self):
+        self.varTundev.set(1)
+        self.varNano.set(1)
+        self.varRadio.set(1)
+        self.varCleartmp.set(1)
+        self.varLog = "e.g: 1,5,6,50"
+        self.log.delete(0, tk.END)
+        self.log.insert(0, self.varLog)
+        self.varTunip = "fd12:3456::1/64"
+        self.Tunip.delete(0, tk.END)
+        self.Tunip.insert(0, self.varTunip)
+
+    def ok(self):
+        self.result = [str(self.Tunip.get()), str(self.log.get())]
+        self.destroy()
+
+    def cancel(self):
+        self.result = None
+        self.destroy()
+
 # Main
 def main():
+
+    _root = tk.Tk()
+    _root.title("GMNsim") # Graph and Mesh Network Simulation Tool
+    # '_root.geometry("800x500")
+    _root.resizable(1,1)
+
+
+    global sim_settings
+    sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
+                    'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
+                    'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64"}
+    def open_config_dialog():
+        global sim_settings
+        print(sim_settings)
+        simconf = ConfigDialog(_root, sim_settings['varTundev'], sim_settings['varNano'],
+                                 sim_settings['varRadio'], sim_settings['varLog'],
+                                 sim_settings['varCleartmp'], sim_settings['varTunip'])
+        simconf.grab_set()  # disable interaction with other windows
+        _root.wait_window(simconf)  # wait for the dialog to be closed
+
+        if simconf.result is not None:
+            print(f"Selected font size: {simconf.result}")
+            sim_settings['varTunip'] = simconf.result[0]
+            sim_settings['varLog'] = simconf.result[1]
+        print(sim_settings)
 
     def select_dir():
         dir = filedialog.askdirectory()
         if dir:
             sim_path.set(dir)
-    
+
+
     def export_runscript(for_sim=False):
         print("Exporting configuration")
+        global sim_settings
         if builder.node_list_index < 1:
             return
         edg = []
@@ -315,16 +426,16 @@ def main():
             edg = [[x-1, y-1] for x, y in edg]
 
         # Gettings options
-        tunip = Tunip.get()
-        cleanup_tmp = varCleartmp.get()
-        add_tun = varTundev.get()
-        be_logged = log.get()
+        tunip = sim_settings['varTunip']
+        cleanup_tmp = sim_settings['varCleartmp'].get()
+        add_tun = sim_settings['varTundev'].get()
+        be_logged = sim_settings['varLog']
         if "e" in be_logged or be_logged == '':
             be_logged = []
         else:
             be_logged = be_logged.split(",")
-        log_nano = varNano.get()
-        log_radio = varRadio.get()
+        log_nano = sim_settings['varNano'].get()
+        log_radio = sim_settings['varRadio'].get()
 
         print("Selected directory: ", sim_path.get())
         complete_conf = SimConfGen(builder.node_list_index, edg, sim_path.get(), cleanup_tmp, add_tun, tunip, log_nano, log_radio, be_logged, None)
@@ -341,12 +452,11 @@ def main():
     def start_sim():
         if sim_path.get() == '$(pwd)':
             print("Please select a directory")
+            tk.messagebox.showinfo(title="First Things First!", message="Please select simulation executables directory")
             return
         export_runscript(True)
         # Run "run.sh" script
         subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', 'bash run.sh; exec bash'])
-
-
 
 
     def get_random_mesh_graph():
@@ -361,44 +471,53 @@ def main():
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         return edges
 
-    _root = tk.Tk()
-    _root.title("GMNsim") # Graph and Mesh Network Simulation Tool
-    # '_root.geometry("800x500")
-    _root.resizable(1,1)
+    def get_sim_topology():
+        bus = dbus.SessionBus()
+        interface_name = 'com.silabs.Wisun.BorderRouter'
+        object_path = '/com/silabs/Wisun/BorderRouter'
+        property_name = 'Nodes'
+        try:
+            proxy_obj = bus.get_object(interface_name, object_path)
+        except:
+            print("Error: Could not connect to the border router")
+            tk.messagebox.showerror(title="Error", message="Could not connect to the border router. Simulation is running?")
+            return
+        interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
 
+        nodes = interface.Get(interface_name, property_name)
+        #print(nodes)
+        gedges = []
+        gnodes = []
+        for n in nodes:
+            nname = ""
+            pname = ""
+            for i in range(0,8):
+                nname = nname + str(int(n[0][i]))
+            for i in range(0,8):
+                pname = pname + str(int(n[1]['parent'][i]))
+            gedges.append((nname,pname))
+            gnodes.append(nname)
+        # plot the graph:
+        #print(gedges)
+        MeshPlot(gedges, None)
+    
     _root.configure(background="grey98")
     
     builder = GBuilder(_root,1500,700,"grey98")
 
+    # add status bar
+    status = tk.Label(_root, text="Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W, bg="grey98")
+    status.pack(side=tk.BOTTOM, fill=tk.X)
+
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
     sim_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
-    loglbl = tk.Label(sim_frame, text="Log:", bg="grey98", fg="#000")
-    loglbl.pack(padx=5, pady=10, side=tk.LEFT)
-    log = tk.Entry(sim_frame)
-    log.insert(0, "e.g: 1,5,6,50")
-    log.pack(padx=5, pady=10, side=tk.LEFT)
-    varNano = tk.IntVar(value=1)
-    Nano = tk.Checkbutton(sim_frame, text="IP stack log", variable=varNano, bg="grey98", fg="#000")
-    Nano.pack(padx=1, pady=10, side=tk.LEFT)
-    varRadio = tk.IntVar(value=1)
-    Radio = tk.Checkbutton(sim_frame, text="MAC/RF log", variable=varRadio, bg="grey98", fg="#000")
-    Radio.pack(padx=1, pady=10, side=tk.LEFT)
-    varCleartmp = tk.IntVar(value=1)
-    Cleartmp = tk.Checkbutton(sim_frame, text="Clear /tmp logs", variable=varCleartmp, bg="grey98", fg="#000")
-    Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
-    varTundev = tk.IntVar(value=1)
-    Tundev = tk.Checkbutton(sim_frame, text="Create TUN interface", variable=varTundev, bg="grey98", fg="#000")
-    Tundev.pack(padx=1, pady=10, side=tk.LEFT)
-    Tuniplbl = tk.Label(sim_frame, text="TUN IP:", bg="grey98", fg="#000")
-    Tuniplbl.pack(padx=5, pady=10, side=tk.LEFT)
-    Tunip = tk.Entry(sim_frame)
-    Tunip.insert(0, "fd12:3456::1/64")
-    Tunip.pack(padx=5, pady=10, side=tk.LEFT)
     simDirlbl = tk.Label(sim_frame, text="Simulator location:", bg="grey98", fg="#000")
     simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
     select_dir_btn = Bt(sim_frame, command=select_dir, text="Select")
     select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
+    cfg_btn = Bt(sim_frame,command=open_config_dialog, text="Simulator config")
+    cfg_btn.pack(padx=10, pady=10, side=tk.LEFT)
     export_grf_btn = Bt(sim_frame, command=export_runscript, text="Export runscript")
     export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
     #varDocker = tk.IntVar()
@@ -407,6 +526,8 @@ def main():
     sim_path = tk.StringVar(value="$(pwd)")
     start_sim_btn = Bt(sim_frame, command=start_sim, text="Start simulation")
     start_sim_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    plt_rpl = Bt(sim_frame, command=get_sim_topology, text="RPL plot")
+    plt_rpl.pack(padx=10, pady=10, side=tk.LEFT)
 
     rnd_gframe = tk.LabelFrame(_root, text="Random Mesh Graph", bg="grey98", height=100)
     rnd_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
