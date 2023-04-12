@@ -4,6 +4,7 @@ from numpy.random.mtrand import sample
 from  matplotlib  import  patches , pyplot  as  plt
 import networkx as nx
 from scipy import sparse
+from networkx.drawing.nx_agraph import graphviz_layout
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', default='default', type=str)       #parameters setting
@@ -129,6 +130,20 @@ def plot_dag(edges,postion):
     nx.draw_networkx(g1, pos=pos, ax=ax)
     ax.set_title("DAG layout in topological order")
     fig.tight_layout()
+    plt.show()
+
+
+def plot_dag_as_tree(edges,postion):
+    G = nx.from_edgelist(edges)
+    plt.title('RPL Tree')
+    pos=graphviz_layout(G, prog='dot')
+    # Get only the last part of the node name
+    labeldict = {}
+    for i in edges:
+        labeldict[i[0]] = i[0][7:]
+    # asign the root node the label 'BR'
+    labeldict['32345600'] = 'BR'
+    nx.draw(G, pos, labels=labeldict, arrows=False)
     plt.show()
 
 def get_pos_dag(edges):
