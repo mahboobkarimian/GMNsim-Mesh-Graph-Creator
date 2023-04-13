@@ -476,11 +476,15 @@ def main():
 
     def stop_sim():
         process_name = 'wssimserver'
-        pid = subprocess.check_output(['pgrep', process_name])
-        pid = pid.decode().strip()
-        # Killing wssimserver will kill all the nodes
-        # wssimserver runs in userspace, no need to sudo here
-        subprocess.run(['kill', '-9', str(pid)])
+        try:
+            pid = subprocess.check_output(['pgrep', process_name])
+            pid = pid.decode().strip()
+            # Killing wssimserver will kill all the nodes
+            # wssimserver runs in userspace, no need to sudo here
+            subprocess.run(['kill', '-9', str(pid)])
+        except subprocess.CalledProcessError:
+            print("No simulation running")
+            tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
 
     def get_random_mesh_graph():
         Nnodes = int(nSimNodes.get())
