@@ -507,7 +507,7 @@ def main():
             proxy_obj = bus.get_object(interface_name, object_path)
         except:
             print("Error: Could not connect to the border router")
-            tk.messagebox.showerror(title="Error", message="Could not connect to the border router. Simulation is running?")
+            tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
             return
         interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
 
