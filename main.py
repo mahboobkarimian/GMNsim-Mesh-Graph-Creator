@@ -456,6 +456,16 @@ def main():
             f.close()
 
     def start_sim():
+        # check if there is already a simulation running:
+        process_name = 'wssimserver'
+        try:
+            pid = subprocess.check_output(['pgrep', process_name])
+            pid = pid.decode().strip()
+            print("Simulation already running with PID: ", pid)
+            tk.messagebox.showwarning(title="Simulation already running", message="Simulation already running with PID: " + pid)
+            return
+        except subprocess.CalledProcessError:
+            print("No simulation running")
         if sim_path.get() == '$(pwd)':
             print("Please select a directory")
             tk.messagebox.showinfo(title="First Things First!", message="Please select simulation executables directory")
