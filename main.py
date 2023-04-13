@@ -12,13 +12,19 @@ from daggen import get_pos_dag as RndGetPos
 ############################################################
 # Class: Theme
 class Bt(tk.Button):
-    def __init__ (self, *args, **kwargs):
+    def __init__ (self, *args, color=None, **kwargs):
         tk.Button.__init__(self, *args, **kwargs)
         self['bg'] = '#0078d4'
         self['fg'] = 'white'
         self['activebackground'] = '#1092cb'
         self['activeforeground'] = 'white'
         self['relief'] = tk.SOLID
+        if color == 'green':
+            self['bg'] = "#25a004"
+            self['activebackground'] = '#3ca858'
+        elif color == 'red':
+            self['bg'] = "#A0042a"
+            self['activebackground'] = '#c3042a'
 
 ############################################################
 # Class: Node
@@ -458,6 +464,13 @@ def main():
         # Run "run.sh" script
         subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', 'bash run.sh; exec bash'])
 
+    def stop_sim():
+        process_name = 'wssimserver'
+        pid = subprocess.check_output(['pgrep', process_name])
+        pid = pid.decode().strip()
+        # Killing wssimserver will kill all the nodes
+        # wssimserver runs in userspace, no need to sudo here
+        subprocess.run(['kill', '-9', str(pid)])
 
     def get_random_mesh_graph():
         Nnodes = int(nSimNodes.get())
@@ -524,10 +537,17 @@ def main():
     #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
     #Docker.pack(padx=1, pady=10, side=tk.LEFT)
     sim_path = tk.StringVar(value="$(pwd)")
-    start_sim_btn = Bt(sim_frame, command=start_sim, text="Start simulation")
-    start_sim_btn.pack(padx=10, pady=10, side=tk.LEFT)
     plt_rpl = Bt(sim_frame, command=get_sim_topology, text="RPL plot")
     plt_rpl.pack(padx=10, pady=10, side=tk.LEFT)
+    conn_time = Bt(sim_frame, command=None, text="Connection time")
+    conn_time.pack(padx=10, pady=10, side=tk.LEFT)
+    mk_report = Bt(sim_frame, command=None, text="Create report")
+    mk_report.pack(padx=10, pady=10, side=tk.LEFT)
+    start_sim_btn = Bt(sim_frame, color='green', command=start_sim, text="Start simulation")
+    start_sim_btn.pack(padx=10, pady=10, side=tk.RIGHT)
+    stop_sim_btn = Bt(sim_frame, color='red', command=stop_sim, text="Stop simulation")
+    stop_sim_btn.pack(padx=10, pady=10, side=tk.RIGHT)
+
 
     rnd_gframe = tk.LabelFrame(_root, text="Random Mesh Graph", bg="grey98", height=100)
     rnd_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
