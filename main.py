@@ -9,6 +9,38 @@ from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
 
+
+def get_sim_nodes():
+    bus = dbus.SessionBus()
+    interface_name = 'com.silabs.Wisun.BorderRouter'
+    object_path = '/com/silabs/Wisun/BorderRouter'
+    property_name = 'Nodes'
+    try:
+        proxy_obj = bus.get_object(interface_name, object_path)
+    except:
+        print("Error: Could not connect to the border router")
+        tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
+        return None, None
+    interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
+    try:
+        nodes = interface.Get(interface_name, property_name)
+    except:
+        print("Error: too soon to read nodes property")
+        tk.messagebox.showerror(title="D-BUS error", message="too soon to read nodes property")
+        return None, None
+    #print(nodes)
+    gedges = []
+    gnodes = []
+    for n in nodes:
+        nname = ""
+        pname = ""
+        for i in range(0,8):
+            nname = nname + str(int(n[0][i]))
+        for i in range(0,8):
+            pname = pname + str(int(n[1]['parent'][i]))
+        gedges.append((nname,pname))
+        gnodes.append(nname)
+    return gnodes, gedges
 ############################################################
 # Class: Theme
 class Bt(tk.Button):
@@ -384,6 +416,118 @@ class ConfigDialog(tk.Toplevel):
         self.result = None
         self.destroy()
 
+############################################################
+# Class: Plot window
+class PlotDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.title(" RPL Tree Plot")
+        self.configure(bg="grey98")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # Before making canvas, get some hints about size of the window
+        # and fill gedges and gnodes
+        self.gedges = []
+        self.gnodes = []
+        pos, CVS_W, CVS_H = self.get_pos_w_h()
+        if pos is None:
+            """ tk.messagebox.showwarning("Error", "No nodes found!")
+            self.destroy()
+            return """
+            CVS_W = 200
+            CVS_H = 200
+        # now create the canvas
+        self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg="grey98")
+        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # draw the graph
+        self.draw_graph(pos)
+
+        # update the graph every 1 sec
+        self.update_graph()
+        
+    def update_graph(self):
+        self.canvas.delete("all")
+        pos, CVS_W, CVS_H = self.get_pos_w_h()
+        if pos is not None:
+            # resize the canvas
+            print("Updating graph every 1 sec")
+            self.canvas.config(width=CVS_W, height=CVS_H)
+            self.draw_graph(pos)
+        self.after(1000, self.update_graph)
+
+    def draw_graph(self, pos):
+        # draw nodes:
+        # hint: pos is a dict: {nodeid: (x, y)}
+        if pos is None:
+            return
+        for nodeid, (x, y) in pos.items():
+            node, text = self.draw_node(x, y, nodeid[7:])
+        # draw edges:
+        for e in self.gedges:
+            x1, y1 = pos[e[0]]
+            x2, y2 = pos[e[1]]
+            line1, line2 = self.draw_line(x1, y1, x2, y2)
+
+    def draw_line(self, x1, y1, x2, y2):
+        line1 = self.canvas.create_line(x1, y1, x2, y2, arrow=None, fill="#222", width=2)
+        line2 = self.canvas.create_line(x1, y1, x2, y2, arrow=None, fill="#222", width=1.5)
+        self.canvas.tag_lower(line1)
+        self.canvas.tag_lower(line2)
+        return line1, line2
+    
+    def draw_node(self, x, y, name):
+        node = self.canvas.create_oval(x-10, y-10, x+10, y+10, fill="#fff", outline="#222", width=2)
+        text = self.canvas.create_text(x, y, text=name, font=("Arial", 8))
+        return node, text
+
+    def update_frequency(self):
+        # required to update canvas and attached toolbar!
+        self.canvas.draw()
+
+    def get_sim_topology(self):
+        gnodes, gedges = get_sim_nodes()
+        if not gnodes or not gedges:
+            return
+        bordernode = ""
+        for p in gedges:
+            if not p[1] in gnodes:
+                bordernode = p[1]
+        gnodes.append(bordernode)
+        self.gedges = gedges
+        self.gnodes = gnodes
+        return MeshPlot(gedges, True)
+
+    def get_pos_w_h(self):
+        pos = self.get_sim_topology()
+        # scale posses to fit in max size we can draw:
+        max_hz = 1200 # define max W
+        max_vt = 600 # define max H
+        print("pos: ", pos)
+        if pos == None:
+            return None, None, None
+        # check the max x and y in pos:
+        max_pos_x = max(pos.values(), key=lambda x: x[0])[0]
+        max_pos_y = max(pos.values(), key=lambda x: x[1])[1]
+        scale_x = 1
+        scale_y = 1
+        if max_pos_x > max_hz or max_pos_y > max_vt:
+            scale_x = (max_hz/max_pos_x)/2 # 2 is a margin by experiment
+            scale_y = (max_vt/max_pos_y)/2
+        new_pos = {}
+        for k in pos:
+            new_pos[k] = (pos[k][0]*scale_x, pos[k][1]*scale_y)
+        pos = new_pos
+        # Determine W and H of canvas to be drawn:
+        CVS_W = max(pos.values(), key=lambda x: x[0])[0] + 15 # 15 is margin right and bottom
+        CVS_H = max(pos.values(), key=lambda x: x[1])[1] + 15
+        return pos, CVS_W, CVS_H
+
+    def on_closing(self):
+        # destroy the window when the "WM_DELETE_WINDOW" event is triggered
+        self.destroy()
+
+############################################################
 # Main
 def main():
 
@@ -391,6 +535,10 @@ def main():
     _root.title("GMNsim") # Graph and Mesh Network Simulation Tool
     # '_root.geometry("800x500")
     _root.resizable(1,1)
+
+    def on_window_close():
+        _root.quit()
+    _root.protocol("WM_DELETE_WINDOW", on_window_close)
 
 
     global sim_settings
@@ -498,36 +646,21 @@ def main():
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         return edges
 
-    def get_sim_topology():
-        bus = dbus.SessionBus()
-        interface_name = 'com.silabs.Wisun.BorderRouter'
-        object_path = '/com/silabs/Wisun/BorderRouter'
-        property_name = 'Nodes'
-        try:
-            proxy_obj = bus.get_object(interface_name, object_path)
-        except:
-            print("Error: Could not connect to the border router")
-            tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
+    def draw_sim_topology():
+        gnodes, gedges = get_sim_nodes()
+        if gnodes is None or gedges is None:
             return
-        interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
-
-        nodes = interface.Get(interface_name, property_name)
-        #print(nodes)
-        gedges = []
-        gnodes = []
-        for n in nodes:
-            nname = ""
-            pname = ""
-            for i in range(0,8):
-                nname = nname + str(int(n[0][i]))
-            for i in range(0,8):
-                pname = pname + str(int(n[1]['parent'][i]))
-            gedges.append((nname,pname))
-            gnodes.append(nname)
         # plot the graph:
-        #print(gedges)
-        MeshPlot(gedges, None)
+        if selected_plot_opt.get() == "Static plot":
+            MeshPlot(gedges, None)
+        else:
+            open_plot_dialog()
     
+    def open_plot_dialog():
+        plotd = PlotDialog(_root)
+        #plotd.grab_set()
+        #_root.wait_window(plotd)
+
     _root.configure(background="grey98")
     
     builder = GBuilder(_root,1500,700,"grey98")
@@ -551,7 +684,15 @@ def main():
     #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
     #Docker.pack(padx=1, pady=10, side=tk.LEFT)
     sim_path = tk.StringVar(value="$(pwd)")
-    plt_rpl = Bt(sim_frame, command=get_sim_topology, text="RPL plot")
+    selection_frame=tk.Frame(sim_frame, bg="grey98")
+    selection_frame.pack(padx=10, pady=0, side=tk.LEFT)
+    selected_plot_opt = tk.StringVar(value="Dynamic plot")
+    # create 2 radio buttons for RPL plot
+    rb1 = tk.Radiobutton(selection_frame, text="Static plot", variable=selected_plot_opt, value="Static plot", bg="grey98", width=12, anchor=tk.W)
+    rb2 = tk.Radiobutton(selection_frame, text="Dynamic plot", variable=selected_plot_opt, value="Dynamic plot", bg="grey98", width=12, anchor=tk.W)
+    rb1.pack(pady=0)
+    rb2.pack(pady=0)
+    plt_rpl = Bt(sim_frame, command=draw_sim_topology, text="RPL plot")
     plt_rpl.pack(padx=10, pady=10, side=tk.LEFT)
     conn_time = Bt(sim_frame, command=None, text="Connection time")
     conn_time.pack(padx=10, pady=10, side=tk.LEFT)
