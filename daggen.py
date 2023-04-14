@@ -143,6 +143,10 @@ def plot_dag_as_tree(edges,postion):
         labeldict[i[0]] = i[0][7:]
     # asign the root node the label 'BR'
     labeldict['32345600'] = 'BR'
+    new_pos = {}
+    if postion == True:
+        # scale poses:
+        return pos
     nx.draw(G, pos, labels=labeldict, arrows=False)
     plt.show()
 
