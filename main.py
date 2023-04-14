@@ -1,3 +1,5 @@
+import json
+import os
 import subprocess
 import tkinter as tk
 from tkinter import filedialog as filedialog
@@ -503,7 +505,6 @@ class PlotDialog(tk.Toplevel):
         # scale posses to fit in max size we can draw:
         max_hz = 1200 # define max W
         max_vt = 600 # define max H
-        print("pos: ", pos)
         if pos == None:
             return None, None, None
         # check the max x and y in pos:
@@ -536,15 +537,23 @@ def main():
     # '_root.geometry("800x500")
     _root.resizable(1,1)
 
+    global sw_config
+    global sim_settings
+
+    def init_sim_settings():
+        global sim_settings
+        sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
+                'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
+                'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64"}
+
     def on_window_close():
+        global sw_config
+        with open("config.json", "w") as f:
+            json.dump(sw_config, f)
         _root.quit()
     _root.protocol("WM_DELETE_WINDOW", on_window_close)
 
 
-    global sim_settings
-    sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
-                    'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
-                    'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64"}
     def open_config_dialog():
         global sim_settings
         print(sim_settings)
@@ -555,16 +564,27 @@ def main():
         _root.wait_window(simconf)  # wait for the dialog to be closed
 
         if simconf.result is not None:
-            print(f"Selected font size: {simconf.result}")
+            print(f"Selected settings: {simconf.result}")
             sim_settings['varTunip'] = simconf.result[0]
             sim_settings['varLog'] = simconf.result[1]
-        print(sim_settings)
+        # Store the settings in the config dict to be written into file upon exit:
+        global sw_config
+        serialized_sim_settings = {}
+        serialized_sim_settings['varTundev'] = sim_settings['varTundev'].get()
+        serialized_sim_settings['varNano'] = sim_settings['varNano'].get()
+        serialized_sim_settings['varRadio'] = sim_settings['varRadio'].get()
+        serialized_sim_settings['varLog'] = sim_settings['varLog']
+        serialized_sim_settings['varCleartmp'] = sim_settings['varCleartmp'].get()
+        serialized_sim_settings['varTunip'] = sim_settings['varTunip']
+        sw_config['sim_settings'] = serialized_sim_settings
+        #print(sim_settings)
 
     def select_dir():
+        global sw_config
         dir = filedialog.askdirectory()
         if dir:
             sim_path.set(dir)
-
+            sw_config['sim_path'] = dir
 
     def export_runscript(for_sim=False):
         print("Exporting configuration")
@@ -743,6 +763,27 @@ def main():
     root_width = max(builder.canvas.winfo_reqwidth(), sim_frame.winfo_reqwidth())
     root_height = builder.canvas.winfo_reqheight() + sim_frame.winfo_reqheight() + rnd_gframe.winfo_reqheight() + ctl_gframe.winfo_reqheight()
     _root.geometry(f"{root_width}x{root_height}")
+
+    # load config file and initialize variables
+    sw_config = {}
+    init_sim_settings()
+    if os.path.exists("config.json"):
+        with open("config.json", "r") as f:
+            try:
+                sw_config = json.load(f)
+            except json.decoder.JSONDecodeError:
+                print("Error: config.json is not a valid JSON file")
+                os.remove("config.json")
+            if 'sim_path' in sw_config:
+                sim_path.set(sw_config['sim_path'])
+            if 'sim_settings' in sw_config:
+                sim_settings['varTundev'].set(sw_config['sim_settings']['varTundev'])
+                sim_settings['varNano'].set(sw_config['sim_settings']['varNano'])
+                sim_settings['varRadio'].set(sw_config['sim_settings']['varRadio'])
+                sim_settings['varLog'] = sw_config['sim_settings']['varLog']
+                sim_settings['varCleartmp'].set(sw_config['sim_settings']['varCleartmp'])
+                sim_settings['varTunip'] = sw_config['sim_settings']['varTunip']
+    #print(sw_config) # debug
 
     _root.mainloop()
 
