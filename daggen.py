@@ -142,8 +142,8 @@ def plot_dag_as_tree(edges,postion):
     for i in edges:
         labeldict[i[0]] = i[0][7:]
     # asign the root node the label 'BR'
-    labeldict['32345600'] = 'BR'
-    new_pos = {}
+    if (len(edges) > 0):
+        labeldict['32345600'] = 'BR'
     if postion == True:
         # scale poses:
         return pos
