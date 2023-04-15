@@ -700,8 +700,13 @@ def main():
     builder = GBuilder(_root,1500,700,"grey98")
 
     # add status bar
-    status = tk.Label(_root, text="Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W, bg="grey98")
-    status.pack(side=tk.BOTTOM, fill=tk.X)
+    status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
+    status_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
+    status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
+    status.pack(padx=10, pady=0, side=tk.LEFT)
+    # Version 0.MONTH+ABCDE...
+    version = tk.Label(status_frame, text="Version: " + "0.4a", anchor=tk.E, bg="grey98")
+    version.pack(padx=10, pady=0, side=tk.RIGHT)
 
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
