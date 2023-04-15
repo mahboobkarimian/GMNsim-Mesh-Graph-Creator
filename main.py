@@ -481,8 +481,15 @@ class PlotDialog(tk.Toplevel):
         return line1, line2
     
     def draw_node(self, x, y, name):
-        node = self.canvas.create_oval(x-10, y-10, x+10, y+10, fill="#fff", outline="#222", width=2)
-        text = self.canvas.create_text(x, y, text=name, font=("Arial", 8))
+        ncolor = "#fff"
+        tcolor = "#000"
+        tname = name
+        if name == '0':
+            tname = "BR"
+            ncolor = "green"
+            tcolor = "white"
+        node = self.canvas.create_oval(x-10, y-10, x+10, y+10, fill=ncolor, outline="#222", width=2)
+        text = self.canvas.create_text(x, y, text=tname, font=("Arial", 8), fill=tcolor)
         return node, text
 
     def update_frequency(self):
