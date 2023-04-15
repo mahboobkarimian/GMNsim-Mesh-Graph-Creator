@@ -522,6 +522,11 @@ class PlotDialog(tk.Toplevel):
         # Determine W and H of canvas to be drawn:
         CVS_W = max(pos.values(), key=lambda x: x[0])[0] + 15 # 15 is margin right and bottom
         CVS_H = max(pos.values(), key=lambda x: x[1])[1] + 15
+        # subtract CVS_H from y of poses to flip the graph:
+        new_pos = {}
+        for k in pos:
+            new_pos[k] = (pos[k][0], CVS_H-pos[k][1])
+        pos = new_pos
         return pos, CVS_W, CVS_H
 
     def on_closing(self):
