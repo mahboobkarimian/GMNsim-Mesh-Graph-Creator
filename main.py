@@ -637,7 +637,29 @@ def main():
             f.write(complete_conf)
             f.close()
 
+    def check_tun_interface(ipv6_addr):
+        output = subprocess.check_output(['ip', '-6', 'addr'])
+        lines = output.decode().split('\n')
+        #print(lines)
+        fnd1 = False
+        fnd2 = False
+        for line in lines:
+            #print(line)
+            if 'tun' in line:
+                fnd1 = True
+                break
+        for line in lines:
+            if ipv6_addr in line:
+                fnd2 = True
+                break
+        return fnd1 and fnd2
+
     def start_sim():
+        tunip = sim_settings['varTunip']
+        if not (check_tun_interface(tunip)):
+            print("Tunnel interface not found")
+            tk.messagebox.showwarning(title="Tun not found", message="Tunnel interface not found with IP: " + tunip)
+            return
         # check if there is already a simulation running:
         process_name = 'wssimserver'
         try:
