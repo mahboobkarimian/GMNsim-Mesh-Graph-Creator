@@ -453,9 +453,11 @@ class PlotDialog(tk.Toplevel):
         pos, CVS_W, CVS_H = self.get_pos_w_h()
         if pos is not None:
             # resize the canvas
-            print("Updating graph every 1 sec")
+            #print("Updating graph every 1 sec")
             self.canvas.config(width=CVS_W, height=CVS_H)
             self.draw_graph(pos)
+        else:
+            self.canvas.create_text(100, 100, text="No nodes yet, wait ...")
         self.after(1000, self.update_graph)
 
     def draw_graph(self, pos):
