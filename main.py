@@ -553,6 +553,8 @@ def main():
 
     global sw_config
     global sim_settings
+    global plotd
+    plotd = None
 
     def init_sim_settings():
         global sim_settings
@@ -688,6 +690,10 @@ def main():
             # Killing wssimserver will kill all the nodes
             # wssimserver runs in userspace, no need to sudo here
             subprocess.run(['kill', '-9', str(pid)])
+            # check if any instance of PlotDialog class is created:
+            global plotd
+            if plotd is not None:
+                plotd.destroy()
         except subprocess.CalledProcessError:
             print("No simulation running")
             tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
@@ -715,6 +721,9 @@ def main():
             open_plot_dialog()
     
     def open_plot_dialog():
+        global plotd
+        if plotd is not None:
+            plotd.destroy()
         plotd = PlotDialog(_root)
         #plotd.grab_set()
         #_root.wait_window(plotd)
