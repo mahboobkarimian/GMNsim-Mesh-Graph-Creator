@@ -727,7 +727,7 @@ def main():
     status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
     status.pack(padx=10, pady=0, side=tk.LEFT)
     # Version 0.MONTH+ABCDE...
-    version = tk.Label(status_frame, text="Version: " + "0.4a", anchor=tk.E, bg="grey98")
+    version = tk.Label(status_frame, text="Version: " + "0.4b", anchor=tk.E, bg="grey98")
     version.pack(padx=10, pady=0, side=tk.RIGHT)
 
     # Create the labelframe
