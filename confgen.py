@@ -33,14 +33,14 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, log_nano, log_radi
         if (log_radio and str(i) in be_logged_nodes) or (log_radio and be_logged_nodes == []):
             config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket\""
         else:
-            config[f'RUN_MAC_{i}'] = f"{dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket > /dev/null 2> /dev/null &"
+            config[f'RUN_MAC_{i}'] = f"sh -c \"{dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket > /dev/null 2> /dev/null &\""
 
     # Run Router nodes
     for i in range(1, num_nodes):
         if (log_nano and str(i) in be_logged_nodes) or (log_nano and be_logged_nodes == []):
             config[f'RUN_R_{i}'] = f"gnome-terminal --window --title \"R_N {i}\" -- {dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_"
         else:
-            config[f'RUN_R_{i}'] = f"{dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_ > /dev/null 2> /dev/null &"
+            config[f'RUN_R_{i}'] = f"sh -c \"{dir}/wsnode -F {dir}/examples/wsnode.conf -u $(readlink \"/tmp/uart{i}\") -o storage_prefix=/tmp/n{i}_ > /dev/null 2> /dev/null &\""
 
     # Run BR
     config['RUN_BR'] = f"gnome-terminal --window --title \"BR N0\" -- {dir}/wsbrd -F {dir}/examples/wsbrd.conf -u $(readlink /tmp/uart0)"
