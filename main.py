@@ -21,14 +21,14 @@ def get_sim_nodes():
         proxy_obj = bus.get_object(interface_name, object_path)
     except:
         print("Error: Could not connect to the border router")
-        tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
+        #tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
         return None, None
     interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
     try:
         nodes = interface.Get(interface_name, property_name)
     except:
         print("Error: too soon to read nodes property")
-        tk.messagebox.showerror(title="D-BUS error", message="too soon to read nodes property")
+        #tk.messagebox.showerror(title="D-BUS error", message="too soon to read nodes property")
         return None, None
     #print(nodes)
     gedges = []
@@ -457,7 +457,7 @@ class PlotDialog(tk.Toplevel):
             self.canvas.config(width=CVS_W, height=CVS_H)
             self.draw_graph(pos)
         else:
-            self.canvas.create_text(100, 100, text="No nodes yet, wait ...")
+            self.canvas.create_text(100, 100, text="No nodes yet, wait please ...")
         self.after(1000, self.update_graph)
 
     def draw_graph(self, pos):
@@ -611,10 +611,8 @@ def main():
         for e in builder.edges:
             anedge =(e[0],e[1])
             edg.append(list(anedge))
-
         if edg[0][0] != 0:
             edg = [[x-1, y-1] for x, y in edg]
-
         # Gettings options
         tunip = sim_settings['varTunip']
         cleanup_tmp = sim_settings['varCleartmp'].get()
@@ -712,10 +710,10 @@ def main():
 
     def draw_sim_topology():
         gnodes, gedges = get_sim_nodes()
-        if gnodes is None or gedges is None:
-            return
         # plot the graph:
         if selected_plot_opt.get() == "Static plot":
+            if gnodes is None or gedges is None:
+                return
             MeshPlot(gedges, None)
         else:
             open_plot_dialog()
