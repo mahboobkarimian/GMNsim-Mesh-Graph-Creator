@@ -280,27 +280,15 @@ class GBuilder:
 
         nx_pos = RndGetPos(edges)
         pos = dict(sorted(nx_pos.items()))
-        # calculate the scale factor by checking the nuumber of nodes
-        # in the most crowded row and column:
-        max_vrtcal_nodes = [i[0] for i in list(pos.values())]
-        max_hrztal_nodes = [i[1] for i in list(pos.values())]
-        mode_v = max(set(max_vrtcal_nodes), key=max_vrtcal_nodes.count)
-        mode_h = max(set(max_hrztal_nodes), key=max_hrztal_nodes.count)
-        max_v = max_vrtcal_nodes.count(mode_v)
-        max_h = max_hrztal_nodes.count(mode_h)
-        scale_factor_v = max(max_v/6,2.15)
-        scale_factor_h = max(max_h/3,2.2)
-        # check also for ratio of the canvas
-        if (max_v/max_h) > 4:
-            scale_factor_h = scale_factor_h/2
-        #print(scale_factor_v, scale_factor_h, "max_v:", max_v, "max_h:", max_h, "mode_v:", mode_v, "mode_h:", mode_h)
-        # move coordinates center to canvas top left corner
+        #print("pos:", pos)
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
         for n in pos:
-            x = pos[n][0] * canvas_width/scale_factor_h + canvas_width/2
-            y = pos[n][1] * canvas_height/scale_factor_v + canvas_height/2
+            # Map pos to canvas size:
+            x = pos[n][0] * canvas_width*0.5 + canvas_width/2 + 20
+            y = pos[n][1] * canvas_height*0.47 + canvas_height/2
             new_node = (Node(x, y, 20, n, self.canvas))
+            #print("x", x, "y", y, "c_w", canvas_width, "c_h", canvas_height)
             self.nodes.append(new_node)
             self.node_list_index += 1
 
