@@ -274,10 +274,13 @@ class GBuilder:
         # edges may have 0 elemnt which is considered as a dummy node here.
         # they must start from 1 in our case, so if it comes from rnd graph
         # we take 2 elements, if its from update function we take 4 elements
-        if len(edges_copy[0]) > 2:
-            edges = [[x, y] for x, y, m, l in edges_copy]
-        else:
-            edges = [[x+1, y+1] for x, y in edges_copy]
+        for elmnt in edges_copy:
+            if 0 in elmnt:
+                if len(edges_copy[0]) > 2:
+                    edges = [[x, y] for x, y, m, l in edges_copy]
+                else:
+                    edges = [[x+1, y+1] for x, y in edges_copy]
+                break
 
         nx_pos = RndGetPos(edges)
         pos = dict(sorted(nx_pos.items()))
@@ -327,16 +330,38 @@ class GBuilder:
         self.connecting = False
         self.selectedNode = dummy_node
 
+    def import_graph(self):
+        name = filedialog.askopenfilename(filetypes=[('Graph files','*.graph')])
+        if name == "":
+            return
+        with open(name, "r") as f:
+            lines = f.readlines()
+            try:
+                num_nodes = int(lines[0]) -1
+            except:
+                tk.messagebox.showerror("Error", "Invalid file format!")
+                return
+            if num_nodes < 1:
+                "No nodes to import!"
+                return
+            self.clear()
+            edges = []
+            for i in range(1, len(lines)):
+                if "---" in lines[i]:
+                    break
+                edges.append([int(lines[i].split(",")[0]), int(lines[i].split(",")[1])])
+            self.draw_graph_from_list(num_nodes, edges)
+
     def export(self):
         if self.node_list_index < 1:
             return
-        name = "graph_" + str(time.strftime("%d_%H_%M_%S_n")) + str(self.node_list_index) + ".txt"
-        f = open(name,"w")
-        f.write(f"{self.node_list_index}\n")
-        for e in self.edges:
-            f.write(f"{e[0]},{e[1]}\n")
-        f.write("---")
-        f.close()
+        name = ["graph_" + str(time.strftime("%d_%H_%M_%S_n")) + str(self.node_list_index) + ".graph", 'last.graph']
+        for filename in name:
+            with open(filename, "w") as f:
+                f.write(f"{self.node_list_index}\n")
+                for e in self.edges:
+                    f.write(f"{e[0]},{e[1]}\n")
+                f.write("---")
 
 ############################################################
 # Class: Config Window
@@ -806,8 +831,10 @@ def main():
     ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
     help_btn = Bt(ctl_gframe, command=None, text="Help")
-    help_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    export_btn = Bt(ctl_gframe, command=builder.export, text="Export graph")
+    help_btn.pack(padx=10, pady=10, side=tk.RIGHT)
+    import_btn = Bt(ctl_gframe, command=builder.import_graph, text="Import")
+    import_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    export_btn = Bt(ctl_gframe, command=builder.export, text="Export")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
     clear_btn = Bt(ctl_gframe, command=builder.clear, text="Clear")
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
