@@ -33,7 +33,7 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, log_nano, log_radi
         if (log_radio and str(i) in be_logged_nodes) or (log_radio and be_logged_nodes == []):
             config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab --title \"MAC_N {i}\" --  bash -c \" {dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket\""
         else:
-            config[f'RUN_MAC_{i}'] = f"sh -c \"{dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket > /dev/null 2> /dev/null &\""
+            config[f'RUN_MAC_{i}'] = f"gnome-terminal --tab -- sh -c \"{dir}/wshwsim -m 01:02:03:04:05:06:00:{i:02x} /tmp/uart{i} /tmp/sim_socket > /dev/null 2> /dev/null\""
 
     # Run Router nodes
     for i in range(1, num_nodes):
