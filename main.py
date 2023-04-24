@@ -281,6 +281,9 @@ class GBuilder:
                 else:
                     edges = [[x+1, y+1] for x, y in edges_copy]
                 break
+        # Otherwise, we have a list of edges that starts from 1:
+        if edges == []:
+            edges = [[x, y] for x, y, m, l in edges_copy]
 
         nx_pos = RndGetPos(edges)
         pos = dict(sorted(nx_pos.items()))
