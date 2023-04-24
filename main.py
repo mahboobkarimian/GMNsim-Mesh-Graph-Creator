@@ -332,10 +332,11 @@ class GBuilder:
         # 'Connecting Nodes Variables:
         self.connecting = False
         self.selectedNode = dummy_node
+        self.id_textMode = 0
 
     def import_graph(self):
         name = filedialog.askopenfilename(filetypes=[('Graph files','*.graph')])
-        if name == "":
+        if type(name) != str or name == "":
             return
         with open(name, "r") as f:
             lines = f.readlines()
@@ -843,7 +844,7 @@ def main():
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
     reindex_btn = Bt(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update")
     reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    change_lbl = tk.Checkbutton(ctl_gframe, text="Hex IDs", command=builder.change_labels_to_hex, bg="grey98", fg="#000")
+    change_lbl = Bt(ctl_gframe, command=builder.change_labels_to_hex, text="HEX/INT IDs")
     change_lbl.pack(padx=10, pady=10, side=tk.LEFT)
 
     root_width = max(builder.canvas.winfo_reqwidth(), sim_frame.winfo_reqwidth())
