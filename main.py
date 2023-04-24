@@ -76,7 +76,7 @@ class Node:
         self.hidden = False
         self.canvas_name = canvas_name
         self.oval = canvas_name.create_oval(x0, y0, x1, y1,fill="gray49")
-        self.text = canvas_name.create_text(x, y, text=str(index-1), font=("Arial", 15), fill="white")
+        self.text = canvas_name.create_text(x, y, text=str(index-1), font=(False, 15), fill="white")
 
     def clicked_down(self):
         self.canvas_name.itemconfig(self.oval, fill="green")
@@ -143,6 +143,7 @@ class GBuilder:
         # 'Connecting Nodes Variables:
         self.connecting = False
         self.selectedNode = dummy_node
+        self.id_textMode = 0 # 0: int node IDs, 1: hex node IDs
 
     def draw_line(self, x1, y1, x2, y2):
         line1 = self.canvas.create_line(x1, y1, x2, y2, arrow=None, fill="#222", width=2.5)
@@ -243,7 +244,7 @@ class GBuilder:
                         n2.index -= 1
                         self.canvas.delete(n2.text)
                         if not n2.hidden:
-                            n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index-1), font=("Arial", 15), fill="black")
+                            n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index-1), font=(False, 15), fill="black")
                 for e in self.edges:
                     if e[0] > idx:
                         e[0] -= 1
@@ -296,6 +297,21 @@ class GBuilder:
             line1, line2 = self.draw_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y)
             edge = [e[0],e[1], line1, line2]
             self.edges.append(edge)
+    
+    def change_labels_to_hex(self):
+        if not self.id_textMode:
+            self.id_textMode = 1
+            for n in self.nodes:
+                if not n.hidden:
+                    self.canvas.delete(n.text)
+                    n.text = self.canvas.create_text(n.x, n.y, text=str(hex(n.index-1))[2:], fill="White")
+        else:
+            self.id_textMode = 0
+            for n in self.nodes:
+                if not n.hidden:
+                    self.canvas.delete(n.text)
+                    n.text = self.canvas.create_text(n.x, n.y, text=str(n.index-1), font=(False, 15), fill="White")
+
 
     def clear(self):
         self.canvas.delete("all")
@@ -477,7 +493,7 @@ class PlotDialog(tk.Toplevel):
             ncolor = "green"
             tcolor = "white"
         node = self.canvas.create_oval(x-10, y-10, x+10, y+10, fill=ncolor, outline="#222", width=2)
-        text = self.canvas.create_text(x, y, text=tname, font=("Arial", 8), fill=tcolor)
+        text = self.canvas.create_text(x, y, text=tname, font=(False, 8), fill=tcolor)
         return node, text
 
     def update_frequency(self):
@@ -500,7 +516,7 @@ class PlotDialog(tk.Toplevel):
     def get_pos_w_h(self):
         pos = self.get_sim_topology()
         # scale posses to fit in max size we can draw:
-        max_hz = 1500 # define max W
+        max_hz = 1400 # define max W
         max_vt = 700 # define max H
         if pos == None:
             return None, None, None
@@ -789,14 +805,16 @@ def main():
 
     ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
+    help_btn = Bt(ctl_gframe, command=None, text="Help")
+    help_btn.pack(padx=10, pady=10, side=tk.LEFT)
     export_btn = Bt(ctl_gframe, command=builder.export, text="Export graph")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
     clear_btn = Bt(ctl_gframe, command=builder.clear, text="Clear")
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
     reindex_btn = Bt(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update")
     reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    help_btn = Bt(ctl_gframe, command=None, text="Help")
-    help_btn.pack(padx=10, pady=10, side=tk.LEFT)
+    change_lbl = tk.Checkbutton(ctl_gframe, text="Hex IDs", command=builder.change_labels_to_hex, bg="grey98", fg="#000")
+    change_lbl.pack(padx=10, pady=10, side=tk.LEFT)
 
     root_width = max(builder.canvas.winfo_reqwidth(), sim_frame.winfo_reqwidth())
     root_height = builder.canvas.winfo_reqheight() + sim_frame.winfo_reqheight() + rnd_gframe.winfo_reqheight() + ctl_gframe.winfo_reqheight()
