@@ -512,8 +512,8 @@ class PlotDialog(tk.Toplevel):
     def get_pos_w_h(self):
         pos = self.get_sim_topology()
         # scale posses to fit in max size we can draw:
-        max_hz = 1200 # define max W
-        max_vt = 600 # define max H
+        max_hz = 1500 # define max W
+        max_vt = 700 # define max H
         if pos == None:
             return None, None, None
         # check the max x and y in pos:
@@ -522,8 +522,8 @@ class PlotDialog(tk.Toplevel):
         scale_x = 1
         scale_y = 1
         if max_pos_x > max_hz or max_pos_y > max_vt:
-            scale_x = (max_hz/max_pos_x)/2 # 2 is a margin by experiment
-            scale_y = (max_vt/max_pos_y)/2
+            scale_x = (max_hz/max_pos_x)/1
+            scale_y = (max_vt/max_pos_y)/1.5
         new_pos = {}
         for k in pos:
             new_pos[k] = (pos[k][0]*scale_x, pos[k][1]*scale_y)
