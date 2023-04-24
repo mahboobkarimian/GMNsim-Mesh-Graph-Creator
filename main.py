@@ -758,8 +758,8 @@ def main():
     selection_frame.pack(padx=10, pady=0, side=tk.LEFT)
     selected_plot_opt = tk.StringVar(value="Dynamic plot")
     # create 2 radio buttons for RPL plot
-    rb1 = tk.Radiobutton(selection_frame, text="Static plot", variable=selected_plot_opt, value="Static plot", bg="grey98", width=12, anchor=tk.W)
-    rb2 = tk.Radiobutton(selection_frame, text="Dynamic plot", variable=selected_plot_opt, value="Dynamic plot", bg="grey98", width=12, anchor=tk.W)
+    rb1 = tk.Radiobutton(selection_frame, text="Static plot (Matplotlib)", variable=selected_plot_opt, value="Static plot", bg="grey98", width=18, anchor=tk.W)
+    rb2 = tk.Radiobutton(selection_frame, text="Dynamic plot (Native)", variable=selected_plot_opt, value="Dynamic plot", bg="grey98", width=18, anchor=tk.W)
     rb1.pack(pady=0)
     rb2.pack(pady=0)
     plt_rpl = Bt(sim_frame, command=draw_sim_topology, text="RPL plot")
