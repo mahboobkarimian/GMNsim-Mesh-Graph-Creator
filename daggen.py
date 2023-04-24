@@ -135,8 +135,29 @@ def plot_dag(edges,postion):
 
 def plot_dag_as_tree(edges,postion):
     G = nx.from_edgelist(edges)
+    DG = nx.DiGraph()
+    root = '32345600'
+    queue = [root]
+    explored = set([root])
+
+    while queue:
+        node = queue.pop(0)
+        for neighbor in G.neighbors(node):
+            if neighbor not in explored:
+                explored.add(neighbor)
+                queue.append(neighbor)
+                # add directed edge to the auxiliary graph
+                if node not in DG:
+                    DG.add_node(node)
+                if neighbor not in DG:
+                    DG.add_node(neighbor)
+                if neighbor in queue:
+                    DG.add_edge(node, neighbor)
+                else:
+                    DG.add_edge(neighbor, node)
+    
     plt.title('RPL Tree')
-    pos=graphviz_layout(G, prog='dot')
+    pos=graphviz_layout(DG, prog='dot')
     # Get only the last part of the node name
     labeldict = {}
     for i in edges:
@@ -147,7 +168,7 @@ def plot_dag_as_tree(edges,postion):
     if postion == True:
         # scale poses:
         return pos
-    nx.draw(G, pos, labels=labeldict, arrows=False)
+    nx.draw(DG, pos, labels=labeldict, arrows=False)
     plt.show()
 
 def get_pos_dag(edges):
@@ -276,4 +297,5 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_un
 
 def random_mesh_graph_gen(num_nodes, max_out, alpha, beta):
     edges, duration, demand, position = DAGs_generate('default',num_nodes,max_out,alpha,beta)
+    #plot_dag(edges,position)
     return edges
