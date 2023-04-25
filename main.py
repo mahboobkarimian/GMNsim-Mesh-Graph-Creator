@@ -76,7 +76,7 @@ class Node:
         self.hidden = False
         self.canvas_name = canvas_name
         self.oval = canvas_name.create_oval(x0, y0, x1, y1,fill="gray49")
-        self.text = canvas_name.create_text(x, y, text=str(index-1), font=(False, 15), fill="white")
+        self.text = canvas_name.create_text(x, y, text=str(index-1), font=(False, 10), fill="white")
 
     def clicked_down(self):
         self.canvas_name.itemconfig(self.oval, fill="green")
@@ -161,7 +161,7 @@ class GBuilder:
                 return
         # 'Add new node:
         self.node_list_index += 1
-        new_node = Node(event.x, event.y, 20, self.node_list_index, self.canvas)
+        new_node = Node(event.x, event.y, 15, self.node_list_index, self.canvas)
         print(event.x, event.y)
         self.nodes.append(new_node)
 
@@ -244,7 +244,7 @@ class GBuilder:
                         n2.index -= 1
                         self.canvas.delete(n2.text)
                         if not n2.hidden:
-                            n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index-1), font=(False, 15), fill="black")
+                            n2.text = self.canvas.create_text(n2.x, n2.y, text=str(n2.index-1), font=(False, 10), fill="black")
                 for e in self.edges:
                     if e[0] > idx:
                         e[0] -= 1
@@ -294,7 +294,7 @@ class GBuilder:
             # Map pos to canvas size:
             x = pos[n][0] * canvas_width*0.5 + canvas_width/2 + 20
             y = pos[n][1] * canvas_height*0.47 + canvas_height/2
-            new_node = (Node(x, y, 20, n, self.canvas))
+            new_node = (Node(x, y, 15, n, self.canvas))
             #print("x", x, "y", y, "c_w", canvas_width, "c_h", canvas_height)
             self.nodes.append(new_node)
             self.node_list_index += 1
@@ -316,7 +316,7 @@ class GBuilder:
             for n in self.nodes:
                 if not n.hidden:
                     self.canvas.delete(n.text)
-                    n.text = self.canvas.create_text(n.x, n.y, text=str(n.index-1), font=(False, 15), fill="White")
+                    n.text = self.canvas.create_text(n.x, n.y, text=str(n.index-1), font=(False, 10), fill="White")
 
 
     def clear(self):
