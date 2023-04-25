@@ -499,7 +499,8 @@ class PlotDialog(tk.Toplevel):
         if pos is None:
             return
         for nodeid, (x, y) in pos.items():
-            node, text = self.draw_node(x, y, nodeid[7:])
+            lbl = int(str(nodeid)[6:7]) * 256 + int(str(nodeid)[7:])
+            node, text = self.draw_node(x, y, str(lbl))
         # draw edges:
         for e in self.gedges:
             x1, y1 = pos[e[0]]

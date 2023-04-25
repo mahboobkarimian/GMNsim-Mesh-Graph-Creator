@@ -161,7 +161,7 @@ def plot_dag_as_tree(edges,postion):
     # Get only the last part of the node name
     labeldict = {}
     for i in edges:
-        labeldict[i[0]] = i[0][7:]
+        labeldict[i[0]] = int(i[0][6:7]) * 256 + int(i[0][7:])
     # asign the root node the label 'BR'
     if (len(edges) > 0):
         labeldict['32345600'] = 'BR'
