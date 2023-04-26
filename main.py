@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import json
 import os
 import subprocess
@@ -8,9 +10,11 @@ from tkinter import ttk
 import dbus
 
 from confgen import configure as SimConfGen
+from assets import bs64_wisun_img as GetWisunImg
 from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
+
 
 TOTAL_NODES = 0
 CONNECTED_NODES = 0
@@ -900,7 +904,9 @@ def main():
 
     ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
-    help_btn = Bt(ctl_gframe, command=None, text="Help")
+    # read image:
+    img = tk.PhotoImage(data=GetWisunImg())
+    help_btn = tk.Button(ctl_gframe, command=None, image=img, bd=0, relief='flat', bg="grey98", fg="#000")
     help_btn.pack(padx=10, pady=10, side=tk.RIGHT)
     import_btn = Bt(ctl_gframe, command=_import, text="Import")
     import_btn.pack(padx=10, pady=10, side=tk.LEFT)
