@@ -4,6 +4,7 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog as filedialog
 import time
+from tkinter import ttk
 import dbus
 
 from confgen import configure as SimConfGen
@@ -11,8 +12,12 @@ from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
 
+TOTAL_NODES = 0
+CONNECTED_NODES = 0
 
 def get_sim_nodes():
+    global CONNECTED_NODES
+    CONNECTED_NODES = 0
     bus = dbus.SessionBus()
     interface_name = 'com.silabs.Wisun.BorderRouter'
     object_path = '/com/silabs/Wisun/BorderRouter'
@@ -42,7 +47,18 @@ def get_sim_nodes():
             pname = pname + str(int(n[1]['parent'][i]))
         gedges.append((nname,pname))
         gnodes.append(nname)
+    CONNECTED_NODES = len(gnodes)
     return gnodes, gedges
+
+def is_sim_running():
+    process_name = 'wssimserver'
+    pid = None
+    try:
+        pid = subprocess.check_output(['pgrep', process_name])
+        pid = pid.decode().strip()
+    except subprocess.CalledProcessError:
+        print("No simulation running")
+    return pid
 ############################################################
 # Class: Theme
 class Bt(tk.Button):
@@ -122,8 +138,9 @@ class GBuilder:
     # TODO: Add DoubleClick event so the nodes can be moved
     # TODO: Add option the remove edge
 
-    def __init__(self, root, width, height, bgc):
+    def __init__(self, root, width, height, bgc, status_bar):
         self.root = root
+        self.status_bar = status_bar
         self.canvas = tk.Canvas(root, height=height, widt=width, bg=bgc)
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
@@ -155,6 +172,13 @@ class GBuilder:
     def canvas_mouseClick(self, event):
         if self.connecting:
             return
+        for n in self.nodes:
+            if n.is_clicked(event.x, event.y):
+                lst = []
+                for e in self.edges:
+                    if n.get_index() in e and n.get_index() != e[1]:
+                        lst.append(e[1]-1)
+                self.status_bar.config(text=f"Node: {n.get_index()-1} connected to {len(lst)} nodes: {lst}")
         # 'Check for collision:
         for n in self.nodes:
             if n.is_collide(event.x, event.y):
@@ -162,7 +186,7 @@ class GBuilder:
         # 'Add new node:
         self.node_list_index += 1
         new_node = Node(event.x, event.y, 15, self.node_list_index, self.canvas)
-        print(event.x, event.y)
+        #print(event.x, event.y)
         self.nodes.append(new_node)
 
     def canvas_mouseRightClick(self, event):
@@ -196,7 +220,7 @@ class GBuilder:
                 #print("Moving to:", event.x, event.y, x, y)
                 n.move_node(x,y)
                 # move edges
-                print("Moving edges", self.edges)
+                #print("Moving edges", self.edges)
                 index = 0
                 for e in self.edges:
                     index += 1
@@ -335,6 +359,7 @@ class GBuilder:
         self.id_textMode = 0
 
     def import_graph(self):
+        num_nodes = 0
         name = filedialog.askopenfilename(filetypes=[('Graph files','*.graph')])
         if type(name) != str or name == "":
             return
@@ -355,6 +380,7 @@ class GBuilder:
                     break
                 edges.append([int(lines[i].split(",")[0]), int(lines[i].split(",")[1])])
             self.draw_graph_from_list(num_nodes, edges)
+        return num_nodes
 
     def export(self):
         if self.node_list_index < 1:
@@ -590,6 +616,21 @@ def main():
     global plotd
     plotd = None
 
+    def retrive_sim_info():
+    # Check the number of MAC/PHY processes as TOTAL_NODES:
+        global TOTAL_NODES
+        try:
+            pids = subprocess.check_output(["pgrep", "wshwsim"])
+            if pids:
+                answer = tk.messagebox.askyesno("A simulation found running.","Do you want to retrieve its information?")
+                if answer:
+                    pids = pids.decode('utf-8').split('\n')
+                    TOTAL_NODES = len(pids) - 2
+                else:
+                    TOTAL_NODES = 0
+        except:
+            pass
+
     def init_sim_settings():
         global sim_settings
         sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
@@ -697,15 +738,11 @@ def main():
             tk.messagebox.showwarning(title="Tun not found", message="Tunnel interface not found with IP: " + tunip)
             return
         # check if there is already a simulation running:
-        process_name = 'wssimserver'
-        try:
-            pid = subprocess.check_output(['pgrep', process_name])
-            pid = pid.decode().strip()
+        pid = is_sim_running()
+        if pid:
             print("Simulation already running with PID: ", pid)
             tk.messagebox.showwarning(title="Simulation already running", message="Simulation already running with PID: " + pid)
             return
-        except subprocess.CalledProcessError:
-            print("No simulation running")
         if sim_path.get() == '$(pwd)':
             print("Please select a directory")
             tk.messagebox.showinfo(title="First Things First!", message="Please select simulation executables directory")
@@ -726,6 +763,7 @@ def main():
             global plotd
             if plotd is not None:
                 plotd.destroy()
+            progress_bar.config(value=0, maximum=TOTAL_NODES)
         except subprocess.CalledProcessError:
             print("No simulation running")
             tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
@@ -740,6 +778,9 @@ def main():
         edges = RndMeshGen(Nnodes, int(Mdegree), float(Alpha), float(Beta))
         #RndMeshPlot(edges, None) # plot the by matplotlib
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
+        global TOTAL_NODES
+        TOTAL_NODES = Nnodes
+        all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
         return edges
 
     def draw_sim_topology():
@@ -761,8 +802,6 @@ def main():
         #_root.wait_window(plotd)
 
     _root.configure(background="grey98")
-    
-    builder = GBuilder(_root,1500,700,"grey98")
 
     # add status bar
     status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
@@ -770,8 +809,34 @@ def main():
     status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
     status.pack(padx=10, pady=0, side=tk.LEFT)
     # Version 0.MONTH+ABCDE...
-    version = tk.Label(status_frame, text="Version: " + "0.4c", anchor=tk.E, bg="grey98")
+    version = tk.Label(status_frame, text="Version: " + "0.4d", anchor=tk.E, bg="grey98")
     version.pack(padx=10, pady=0, side=tk.RIGHT)
+    # Progress bar
+    progress_bar = ttk.Progressbar(status_frame, orient=tk.HORIZONTAL, length=100, mode='determinate')
+    progress_bar.pack(padx=10, pady=0, side=tk.RIGHT)
+    all_nodes = tk.Label(status_frame, text="# Nodes: " + str(TOTAL_NODES), anchor=tk.E, bg="grey98")
+    all_nodes.pack(padx=10, pady=0, side=tk.RIGHT)
+
+    def update_progress_bar():
+        if is_sim_running():
+            try:
+                # This is a hack to check if the plot dialog is exists
+                # Since upon closing the plot dialog, plotd is not set to None
+                if plotd.state() == "withdrawn":
+                    pass
+            except:
+                get_sim_nodes()
+            if TOTAL_NODES > 0:
+                progress_bar.config(value=CONNECTED_NODES, maximum=TOTAL_NODES)
+            #print(CONNECTED_NODES,"/", TOTAL_NODES)
+        _root.after(20000, update_progress_bar)
+
+    builder = GBuilder(_root,1500,700,"grey98", status)
+
+    def _import():
+        global TOTAL_NODES
+        TOTAL_NODES = builder.import_graph()
+        all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
 
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
@@ -837,7 +902,7 @@ def main():
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
     help_btn = Bt(ctl_gframe, command=None, text="Help")
     help_btn.pack(padx=10, pady=10, side=tk.RIGHT)
-    import_btn = Bt(ctl_gframe, command=builder.import_graph, text="Import")
+    import_btn = Bt(ctl_gframe, command=_import, text="Import")
     import_btn.pack(padx=10, pady=10, side=tk.LEFT)
     export_btn = Bt(ctl_gframe, command=builder.export, text="Export")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
@@ -872,6 +937,13 @@ def main():
                 sim_settings['varCleartmp'].set(sw_config['sim_settings']['varCleartmp'])
                 sim_settings['varTunip'] = sw_config['sim_settings']['varTunip']
     #print(sw_config) # debug
+
+    # If user wants to retrieve the sim info
+    retrive_sim_info()
+    all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
+    progress_bar.config(value=0, maximum=TOTAL_NODES)
+    # Start progress bar
+    update_progress_bar()
 
     _root.mainloop()
 
