@@ -803,8 +803,11 @@ def main():
             if plotd is not None:
                 plotd.destroy()
             globalinfo.reset_connected_nodes()
-            progress_bar.config(value=0, maximum=globalinfo.get_total_nodes())
-            all_nodes.config(text="0"+"/"+str(globalinfo.get_total_nodes()))
+            # If total nodes value retrived from the running sim and there is not
+            # any nodes in canvas:
+            if builder.node_list_index < 1:
+                globalinfo.reset_total_nodes()
+            update_status_progress_bar()
         except subprocess.CalledProcessError:
             print("No simulation running")
             tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
