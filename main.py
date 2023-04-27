@@ -16,12 +16,10 @@ from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
 
 
-TOTAL_NODES = 0
-CONNECTED_NODES = 0
+_VERSION = "0.4e"
 
 def get_sim_nodes():
-    global CONNECTED_NODES
-    CONNECTED_NODES = 0
+    globalinfo.reset_connected_nodes()
     bus = dbus.SessionBus()
     interface_name = 'com.silabs.Wisun.BorderRouter'
     object_path = '/com/silabs/Wisun/BorderRouter'
@@ -51,7 +49,7 @@ def get_sim_nodes():
             pname = pname + str(int(n[1]['parent'][i]))
         gedges.append((nname,pname))
         gnodes.append(nname)
-    CONNECTED_NODES = len(gnodes)
+    globalinfo.set_connected_nodes(len(gnodes))
     return gnodes, gedges
 
 def is_sim_running():
@@ -63,6 +61,31 @@ def is_sim_running():
     except subprocess.CalledProcessError:
         print("No simulation running")
     return pid
+############################################################
+# Class: Global information
+class GlobalInfo:
+    def __init__(self):
+        self.total_nodes = 0
+        self.connected_nodes = 0
+    
+    def set_total_nodes(self, num_nodes):
+        self.total_nodes = num_nodes
+
+    def set_connected_nodes(self, num_nodes):
+        self.connected_nodes = num_nodes
+
+    def reset_total_nodes(self):
+        self.total_nodes = 0
+
+    def reset_connected_nodes(self):
+        self.connected_nodes = 0
+
+    def get_total_nodes(self):
+        return self.total_nodes
+    
+    def get_connected_nodes(self):
+        return self.connected_nodes
+
 ############################################################
 # Class: Theme
 class Bt(tk.Button):
@@ -192,6 +215,7 @@ class GBuilder:
         new_node = Node(event.x, event.y, 15, self.node_list_index, self.canvas)
         #print(event.x, event.y)
         self.nodes.append(new_node)
+        globalinfo.set_total_nodes(self.node_list_index)
 
     def canvas_mouseRightClick(self, event):
         for n in self.nodes:
@@ -260,6 +284,7 @@ class GBuilder:
                 #print(tmp_edges, "||||", self.edges)
                 self.edges = tmp_edges
                 break
+        #self.reinddex_nodes_and_edges()
 
     def reinddex_nodes_and_edges(self):
         # Reindex nodes:
@@ -282,6 +307,7 @@ class GBuilder:
             else:
                 tmp_nodes.append(n1)
         self.nodes = tmp_nodes
+        globalinfo.set_total_nodes(self.node_list_index)
 
         # check if window size is changed:
         if self.canvas.winfo_width() != self.canvas_width+2 or self.canvas.winfo_height() != self.canvas_height+39:
@@ -331,6 +357,7 @@ class GBuilder:
             line1, line2 = self.draw_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y)
             edge = [e[0],e[1], line1, line2]
             self.edges.append(edge)
+        globalinfo.set_total_nodes(num_raw_nodes)
     
     def change_labels_to_hex(self):
         if not self.id_textMode:
@@ -361,6 +388,7 @@ class GBuilder:
         self.connecting = False
         self.selectedNode = dummy_node
         self.id_textMode = 0
+        globalinfo.reset_total_nodes()
 
     def import_graph(self):
         num_nodes = 0
@@ -384,7 +412,6 @@ class GBuilder:
                     break
                 edges.append([int(lines[i].split(",")[0]), int(lines[i].split(",")[1])])
             self.draw_graph_from_list(num_nodes, edges)
-        return num_nodes
 
     def export(self):
         if self.node_list_index < 1:
@@ -606,6 +633,8 @@ class PlotDialog(tk.Toplevel):
         # destroy the window when the "WM_DELETE_WINDOW" event is triggered
         self.destroy()
 
+globalinfo = GlobalInfo()
+
 ############################################################
 # Main
 def main():
@@ -615,6 +644,13 @@ def main():
     # '_root.geometry("800x500")
     _root.resizable(1,1)
 
+    ttkstyle = ttk.Style()
+    ttkstyle.theme_use('alt')
+    ttkstyle.configure('blue.Horizontal.TProgressbar',
+        troughcolor  = 'grey',
+        troughrelief = 'flat',
+        background   = '#0078d4')
+    
     global sw_config
     global sim_settings
     global plotd
@@ -622,16 +658,15 @@ def main():
 
     def retrive_sim_info():
     # Check the number of MAC/PHY processes as TOTAL_NODES:
-        global TOTAL_NODES
         try:
             pids = subprocess.check_output(["pgrep", "wshwsim"])
             if pids:
                 answer = tk.messagebox.askyesno("A simulation found running.","Do you want to retrieve its information?")
                 if answer:
                     pids = pids.decode('utf-8').split('\n')
-                    TOTAL_NODES = len(pids) - 2
+                    globalinfo.set_total_nodes(len(pids) - 2)
                 else:
-                    TOTAL_NODES = 0
+                    globalinfo.reset_total_nodes()
         except:
             pass
 
@@ -767,7 +802,9 @@ def main():
             global plotd
             if plotd is not None:
                 plotd.destroy()
-            progress_bar.config(value=0, maximum=TOTAL_NODES)
+            globalinfo.reset_connected_nodes()
+            progress_bar.config(value=0, maximum=globalinfo.get_total_nodes())
+            all_nodes.config(text="0"+"/"+str(globalinfo.get_total_nodes()))
         except subprocess.CalledProcessError:
             print("No simulation running")
             tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
@@ -782,9 +819,7 @@ def main():
         edges = RndMeshGen(Nnodes, int(Mdegree), float(Alpha), float(Beta))
         #RndMeshPlot(edges, None) # plot the by matplotlib
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
-        global TOTAL_NODES
-        TOTAL_NODES = Nnodes
-        all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
+        update_status_progress_bar()
         return edges
 
     def draw_sim_topology():
@@ -804,24 +839,12 @@ def main():
         plotd = PlotDialog(_root)
         #plotd.grab_set()
         #_root.wait_window(plotd)
+    
+    def update_status_progress_bar():
+        all_nodes.config(text=str(globalinfo.get_connected_nodes())+"/"+str(globalinfo.get_total_nodes()))
+        progress_bar.config(value=globalinfo.get_connected_nodes(), maximum=globalinfo.get_total_nodes())
 
-    _root.configure(background="grey98")
-
-    # add status bar
-    status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
-    status_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
-    status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
-    status.pack(padx=10, pady=0, side=tk.LEFT)
-    # Version 0.MONTH+ABCDE...
-    version = tk.Label(status_frame, text="Version: " + "0.4d", anchor=tk.E, bg="grey98")
-    version.pack(padx=10, pady=0, side=tk.RIGHT)
-    # Progress bar
-    progress_bar = ttk.Progressbar(status_frame, orient=tk.HORIZONTAL, length=100, mode='determinate')
-    progress_bar.pack(padx=10, pady=0, side=tk.RIGHT)
-    all_nodes = tk.Label(status_frame, text="# Nodes: " + str(TOTAL_NODES), anchor=tk.E, bg="grey98")
-    all_nodes.pack(padx=10, pady=0, side=tk.RIGHT)
-
-    def update_progress_bar():
+    def start_progress_bar():
         if is_sim_running():
             try:
                 # This is a hack to check if the plot dialog is exists
@@ -830,17 +853,39 @@ def main():
                     pass
             except:
                 get_sim_nodes()
-            if TOTAL_NODES > 0:
-                progress_bar.config(value=CONNECTED_NODES, maximum=TOTAL_NODES)
-            #print(CONNECTED_NODES,"/", TOTAL_NODES)
-        _root.after(20000, update_progress_bar)
+            if globalinfo.get_total_nodes() > 0:
+                update_status_progress_bar()
+        _root.after(20000, start_progress_bar)
+    
+    def _import():
+        builder.import_graph()
+        update_status_progress_bar()
+
+    def _clear():
+        builder.clear()
+        update_status_progress_bar()
+
+    def _update():
+        builder.reinddex_nodes_and_edges()
+        update_status_progress_bar()
+
+    _root.configure(background="grey98")
+
+    # add status bar
+    status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
+    status_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
+    status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
+    status.pack(padx=5, pady=0, side=tk.LEFT)
+    # Version 0.MONTH+ABCDE...
+    version = tk.Label(status_frame, text="v. " + _VERSION, anchor=tk.E, bg="grey98", fg="grey")
+    version.pack(padx=5, pady=0, side=tk.RIGHT)
+    # Progress bar
+    progress_bar = ttk.Progressbar(status_frame, style='blue.Horizontal.TProgressbar',orient=tk.HORIZONTAL, length=120, mode='determinate')
+    progress_bar.pack(padx=0, pady=0, side=tk.RIGHT)
+    all_nodes = tk.Label(status_frame, text="?", anchor=tk.E, bg="grey98")
+    all_nodes.pack(padx=1, pady=0, side=tk.RIGHT)
 
     builder = GBuilder(_root,1500,700,"grey98", status)
-
-    def _import():
-        global TOTAL_NODES
-        TOTAL_NODES = builder.import_graph()
-        all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
 
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
@@ -912,9 +957,9 @@ def main():
     import_btn.pack(padx=10, pady=10, side=tk.LEFT)
     export_btn = Bt(ctl_gframe, command=builder.export, text="Export")
     export_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    clear_btn = Bt(ctl_gframe, command=builder.clear, text="Clear")
+    clear_btn = Bt(ctl_gframe, command=_clear, text="Clear")
     clear_btn.pack(padx=10, pady=10, side=tk.LEFT)
-    reindex_btn = Bt(ctl_gframe, command=builder.reinddex_nodes_and_edges, text="Update")
+    reindex_btn = Bt(ctl_gframe, command=_update, text="Update")
     reindex_btn.pack(padx=10, pady=10, side=tk.LEFT)
     change_lbl = Bt(ctl_gframe, command=builder.change_labels_to_hex, text="HEX/INT IDs")
     change_lbl.pack(padx=10, pady=10, side=tk.LEFT)
@@ -946,10 +991,9 @@ def main():
 
     # If user wants to retrieve the sim info
     retrive_sim_info()
-    all_nodes.config(text="# Nodes: " + str(TOTAL_NODES))
-    progress_bar.config(value=0, maximum=TOTAL_NODES)
+    update_status_progress_bar()
     # Start progress bar
-    update_progress_bar()
+    start_progress_bar()
 
     _root.mainloop()
 
