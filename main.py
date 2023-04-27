@@ -67,6 +67,7 @@ class GlobalInfo:
     def __init__(self):
         self.total_nodes = 0
         self.connected_nodes = 0
+        self.sim_settings = dict()
     
     def set_total_nodes(self, num_nodes):
         self.total_nodes = num_nodes
@@ -85,6 +86,28 @@ class GlobalInfo:
     
     def get_connected_nodes(self):
         return self.connected_nodes
+    
+    def init_sim_settings(self):
+        self.sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
+                'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
+                'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64",
+                'sim_path': ""}
+    
+    def set_sim_settings(self, sw_config): 
+        self.sim_settings['varTundev'].set(sw_config['varTundev'])
+        self.sim_settings['varNano'].set(sw_config['varNano'])
+        self.sim_settings['varRadio'].set(sw_config['varRadio'])
+        self.sim_settings['varLog'] = sw_config['varLog']
+        self.sim_settings['varCleartmp'].set(sw_config['varCleartmp'])
+        self.sim_settings['varTunip'] = sw_config['varTunip']
+        if 'sim_path' in sw_config.keys():
+            self.sim_settings['sim_path'] = sw_config['sim_path']
+
+    def set_sim_setting_element(self, element, value):
+        self.sim_settings[element] = value
+
+    def get_sim_settings(self):
+        return self.sim_settings
 
 ############################################################
 # Class: Theme
@@ -633,7 +656,10 @@ class PlotDialog(tk.Toplevel):
         # destroy the window when the "WM_DELETE_WINDOW" event is triggered
         self.destroy()
 
+############################################################
+# Global variables
 globalinfo = GlobalInfo()
+plotd = None
 
 ############################################################
 # Main
@@ -650,11 +676,6 @@ def main():
         troughcolor  = 'grey',
         troughrelief = 'flat',
         background   = '#0078d4')
-    
-    global sw_config
-    global sim_settings
-    global plotd
-    plotd = None
 
     def retrive_sim_info():
     # Check the number of MAC/PHY processes as TOTAL_NODES:
@@ -670,22 +691,26 @@ def main():
         except:
             pass
 
-    def init_sim_settings():
-        global sim_settings
-        sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
-                'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
-                'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64"}
-
     def on_window_close():
-        global sw_config
+        sim_settings = globalinfo.get_sim_settings()
+        print(sim_settings)
+        # Store the settings in the config dict to be written into file upon exit:
+        serialized_sim_settings = {}
+        serialized_sim_settings['varTundev'] = sim_settings['varTundev'].get()
+        serialized_sim_settings['varNano'] = sim_settings['varNano'].get()
+        serialized_sim_settings['varRadio'] = sim_settings['varRadio'].get()
+        serialized_sim_settings['varLog'] = sim_settings['varLog']
+        serialized_sim_settings['varCleartmp'] = sim_settings['varCleartmp'].get()
+        serialized_sim_settings['varTunip'] = sim_settings['varTunip']
+        serialized_sim_settings['sim_path'] = sim_settings['sim_path']
         with open("config.json", "w") as f:
-            json.dump(sw_config, f)
+            json.dump(serialized_sim_settings, f)
         _root.quit()
     _root.protocol("WM_DELETE_WINDOW", on_window_close)
 
 
     def open_config_dialog():
-        global sim_settings
+        sim_settings = globalinfo.get_sim_settings()
         print(sim_settings)
         simconf = ConfigDialog(_root, sim_settings['varTundev'], sim_settings['varNano'],
                                  sim_settings['varRadio'], sim_settings['varLog'],
@@ -695,30 +720,19 @@ def main():
 
         if simconf.result is not None:
             print(f"Selected settings: {simconf.result}")
-            sim_settings['varTunip'] = simconf.result[0]
-            sim_settings['varLog'] = simconf.result[1]
-        # Store the settings in the config dict to be written into file upon exit:
-        global sw_config
-        serialized_sim_settings = {}
-        serialized_sim_settings['varTundev'] = sim_settings['varTundev'].get()
-        serialized_sim_settings['varNano'] = sim_settings['varNano'].get()
-        serialized_sim_settings['varRadio'] = sim_settings['varRadio'].get()
-        serialized_sim_settings['varLog'] = sim_settings['varLog']
-        serialized_sim_settings['varCleartmp'] = sim_settings['varCleartmp'].get()
-        serialized_sim_settings['varTunip'] = sim_settings['varTunip']
-        sw_config['sim_settings'] = serialized_sim_settings
+            globalinfo.set_sim_setting_element('varTunip', simconf.result[0])
+            globalinfo.set_sim_setting_element('varLog', simconf.result[1])
         #print(sim_settings)
 
     def select_dir():
-        global sw_config
         dir = filedialog.askdirectory()
         if dir:
             sim_path.set(dir)
-            sw_config['sim_path'] = dir
+            globalinfo.set_sim_setting_element('sim_path', dir)
 
     def export_runscript(for_sim=False):
         print("Exporting configuration")
-        global sim_settings
+        sim_settings = globalinfo.get_sim_settings()
         if builder.node_list_index < 1:
             return
         edg = []
@@ -771,6 +785,7 @@ def main():
     def start_sim():
         if builder.node_list_index < 1:
             return
+        sim_settings = globalinfo.get_sim_settings()
         tunip = sim_settings['varTunip']
         if not (check_tun_interface(tunip)) and not sim_settings['varTundev'].get():
             print("Tunnel interface not found")
@@ -799,7 +814,6 @@ def main():
             # wssimserver runs in userspace, no need to sudo here
             subprocess.run(['kill', '-9', str(pid)])
             # check if any instance of PlotDialog class is created:
-            global plotd
             if plotd is not None:
                 plotd.destroy()
             globalinfo.reset_connected_nodes()
@@ -973,7 +987,7 @@ def main():
 
     # load config file and initialize variables
     sw_config = {}
-    init_sim_settings()
+    globalinfo.init_sim_settings()
     if os.path.exists("config.json"):
         with open("config.json", "r") as f:
             try:
@@ -981,16 +995,11 @@ def main():
             except json.decoder.JSONDecodeError:
                 print("Error: config.json is not a valid JSON file")
                 os.remove("config.json")
-            if 'sim_path' in sw_config:
-                sim_path.set(sw_config['sim_path'])
-            if 'sim_settings' in sw_config:
-                sim_settings['varTundev'].set(sw_config['sim_settings']['varTundev'])
-                sim_settings['varNano'].set(sw_config['sim_settings']['varNano'])
-                sim_settings['varRadio'].set(sw_config['sim_settings']['varRadio'])
-                sim_settings['varLog'] = sw_config['sim_settings']['varLog']
-                sim_settings['varCleartmp'].set(sw_config['sim_settings']['varCleartmp'])
-                sim_settings['varTunip'] = sw_config['sim_settings']['varTunip']
-    #print(sw_config) # debug
+            if sw_config != {}:  # if config file is not empty
+                globalinfo.set_sim_settings(sw_config)
+                if 'sim_path' in sw_config.keys():
+                    if sw_config['sim_path'] != "":
+                        sim_path.set(sw_config['sim_path'])
 
     # If user wants to retrieve the sim info
     retrive_sim_info()
