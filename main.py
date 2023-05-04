@@ -14,6 +14,7 @@ from assets import bs64_wisun_img as GetWisunImg
 from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
+from managed_daggen import random_dag as MngRndMeshGen
 
 
 _VERSION = "0.4e"
@@ -627,7 +628,7 @@ class PlotDialog(tk.Toplevel):
         pos = self.get_sim_topology()
         # scale posses to fit in max size we can draw:
         max_hz = 1400 # define max W
-        max_vt = 700 # define max H
+        max_vt = 900 # define max H
         if pos == None:
             return None, None, None
         # check the max x and y in pos:
@@ -828,12 +829,28 @@ def main():
 
     def get_random_mesh_graph():
         Nnodes = int(nSimNodes.get())
+        Mdegree = int(maxDegree.get())
         if Nnodes < 1:
             return
-        Alpha = alpha.get()
-        Beta = beta.get()
-        Mdegree = maxDegree.get()
-        edges = RndMeshGen(Nnodes, int(Mdegree), float(Alpha), float(Beta))
+        if genmode.get() == "Shaped":
+            Alpha = alpha.get()
+            Beta = beta.get()
+            edges = RndMeshGen(Nnodes, Mdegree, float(Alpha), float(Beta))
+        else: # Managed
+            lys = int(nlyrnum.get())
+            min_npl = int(nminnum.get())
+            max_npl = int(nmaxnum.get())
+            n_l1 = int(n1stnum.get())
+            acc = int(accurate.get())
+            if acc:
+                if (lys * max_npl)/Nnodes < 1.15 or (Nnodes > 200 and (max_npl/min_npl) > 2):
+                    yesno = tk.messagebox.askyesno(title="Warning", message="Finding a solution may be impossible. Continue?")
+                    if not yesno:
+                        return
+            _ , edges = MngRndMeshGen(Nnodes, lys, min_npl, max_npl, n_l1, Mdegree, acc)
+            if len(edges) == 0:
+                tk.messagebox.showwarning(title="Warning", message="No solution found, adjust parameters and try again")
+                return
         #RndMeshPlot(edges, None) # plot the by matplotlib
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         update_status_progress_bar()
@@ -873,6 +890,24 @@ def main():
             if globalinfo.get_total_nodes() > 0:
                 update_status_progress_bar()
         _root.after(20000, start_progress_bar)
+
+    def update_gen_mode():
+        if genmode.get() == "Managed":
+            alpha.config(state=tk.DISABLED)
+            beta.config(state=tk.DISABLED)
+            nlyrnum.config(state=tk.NORMAL)
+            n1stnum.config(state=tk.NORMAL)
+            nminnum.config(state=tk.NORMAL)
+            nmaxnum.config(state=tk.NORMAL)
+            accuratelbl.config(state=tk.NORMAL)
+        elif genmode.get() == "Shaped":
+            alpha.config(state=tk.NORMAL)
+            beta.config(state=tk.NORMAL)
+            nlyrnum.config(state=tk.DISABLED)
+            n1stnum.config(state=tk.DISABLED)
+            nminnum.config(state=tk.DISABLED)
+            nmaxnum.config(state=tk.DISABLED)
+            accuratelbl.config(state=tk.DISABLED)
     
     def _import():
         builder.import_graph()
@@ -890,7 +925,7 @@ def main():
 
     # add status bar
     status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
-    status_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
+    status_frame.pack(side=tk.BOTTOM, padx=5, pady=1, fill=tk.BOTH, expand=0)
     status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
     status.pack(padx=5, pady=0, side=tk.LEFT)
     # Version 0.MONTH+ABCDE...
@@ -906,7 +941,7 @@ def main():
 
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
-    sim_frame.pack(side=tk.BOTTOM, padx=5, pady=5, fill=tk.BOTH, expand=0)
+    sim_frame.pack(side=tk.BOTTOM, padx=5, pady=1, fill=tk.BOTH, expand=0)
     simDirlbl = tk.Label(sim_frame, text="Simulator location:", bg="grey98", fg="#000")
     simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
     select_dir_btn = Bt(sim_frame, command=select_dir, text="Select")
@@ -940,32 +975,70 @@ def main():
 
 
     rnd_gframe = tk.LabelFrame(_root, text="Random Mesh Graph", bg="grey98", height=100)
-    rnd_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
-    nSimNodeslbl = tk.Label(rnd_gframe, text="# Nodes:", bg="grey98", fg="#000")
-    nSimNodeslbl.pack(padx=5, pady=10, side=tk.LEFT)
-    nSimNodes = tk.Entry(rnd_gframe, width=5)
+    rnd_gframe.pack(side=tk.LEFT, padx=5, pady=1, fill=tk.BOTH, expand=1)
+    generate_btn = Bt(rnd_gframe, command=get_random_mesh_graph, text="Generate")
+    generate_btn.pack(padx=5, pady=10, side=tk.RIGHT)
+    rnd_sub_frame0 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame0.pack(side=tk.LEFT, padx=0, pady=0, expand=0, anchor=tk.W)
+    rnd_sub_frame1 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame1.pack(side=tk.TOP, padx=0, pady=0, expand=1, anchor=tk.W)
+    rnd_sub_frame2 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame2.pack(side=tk.TOP, padx=0, pady=0, expand=1, anchor=tk.W)
+
+    genmode = tk.StringVar(value="Managed")
+    rbgemode1 = tk.Radiobutton(rnd_sub_frame0, text="Managed", variable=genmode, value="Managed", bg="grey98", width=8, anchor=tk.W, command=update_gen_mode)
+    rbgemode2 = tk.Radiobutton(rnd_sub_frame0, text="Shaped", variable=genmode, value="Shaped", bg="grey98", width=8, anchor=tk.W, command=update_gen_mode)
+    rbgemode1.pack(pady=4, side=tk.BOTTOM)
+    rbgemode2.pack(pady=4, side=tk.BOTTOM)
+    
+    nSimNodeslbl = tk.Label(rnd_sub_frame1, text="Nodes:", bg="grey98", fg="#000", width=7)
+    nSimNodeslbl.pack(padx=5, pady=0, side=tk.LEFT)
+    nSimNodes = tk.Entry(rnd_sub_frame1, width=5)
     nSimNodes.insert(0, "50")
-    nSimNodes.pack(padx=5, pady=10, side=tk.LEFT)
-    alphalbl = tk.Label(rnd_gframe, text="Shape (branching factor):", bg="grey98", fg="#000")
-    alphalbl.pack(padx=5, pady=10, side=tk.LEFT)
-    alpha = tk.Entry(rnd_gframe, width=5)
-    alpha.insert(0, "1")
-    alpha.pack(padx=5, pady=10, side=tk.LEFT)
-    betalbl = tk.Label(rnd_gframe, text="Regularity:", bg="grey98", fg="#000")
-    betalbl.pack(padx=5, pady=10, side=tk.LEFT)
-    beta = tk.Entry(rnd_gframe, width=5)
-    beta.insert(0, "0.5")
-    beta.pack(padx=5, pady=10, side=tk.LEFT)
-    maxDegreelbl = tk.Label(rnd_gframe, text="Max RF neighbors:", bg="grey98", fg="#000")
-    maxDegreelbl.pack(padx=5, pady=10, side=tk.LEFT)
-    maxDegree = tk.Entry(rnd_gframe, width=5)
+    nSimNodes.pack(padx=5, pady=0, side=tk.LEFT)
+    maxDegreelbl = tk.Label(rnd_sub_frame1, text="Max(NBR):", bg="grey98", fg="#000", width=8)
+    maxDegreelbl.pack(padx=5, pady=0, side=tk.LEFT)
+    maxDegree = tk.Entry(rnd_sub_frame1, width=5)
     maxDegree.insert(0, "5")
-    maxDegree.pack(padx=5, pady=10, side=tk.LEFT)
-    generate_btn = Bt(rnd_gframe, command=get_random_mesh_graph, text="Random graph")
-    generate_btn.pack(padx=5, pady=10, side=tk.LEFT)
+    maxDegree.pack(padx=5, pady=0, side=tk.LEFT)
+    alphalbl = tk.Label(rnd_sub_frame1, text="Shape:", bg="grey98", fg="#000", width=8)
+    alphalbl.pack(padx=5, pady=0, side=tk.LEFT)
+    alpha = tk.Entry(rnd_sub_frame1, width=5)
+    alpha.insert(0, "1")
+    alpha.pack(padx=5, pady=0, side=tk.LEFT)
+    betalbl = tk.Label(rnd_sub_frame1, text="Regularity:", bg="grey98", fg="#000", width=8)
+    betalbl.pack(padx=5, pady=0, side=tk.LEFT)
+    beta = tk.Entry(rnd_sub_frame1, width=5)
+    beta.insert(0, "0.5")
+    beta.pack(padx=5, pady=0, side=tk.LEFT)
+
+    nlyrlbl = tk.Label(rnd_sub_frame2, text="Layers:", bg="grey98", fg="#000", width=7)
+    nlyrlbl.pack(padx=5, pady=0, side=tk.LEFT)
+    nlyrnum = tk.Entry(rnd_sub_frame2, width=5)
+    nlyrnum.insert(0, "6")
+    nlyrnum.pack(padx=5, pady=0, side=tk.LEFT)
+    n1stlbl = tk.Label(rnd_sub_frame2, text="N/L1:", bg="grey98", fg="#000", width=8)
+    n1stlbl.pack(padx=5, pady=0, side=tk.LEFT)
+    n1stnum = tk.Entry(rnd_sub_frame2, width=5)
+    n1stnum.insert(0, "4")
+    n1stnum.pack(padx=5, pady=0, side=tk.LEFT)
+    nmaxlbl = tk.Label(rnd_sub_frame2, text="Max(N/L):", bg="grey98", fg="#000", width=8)
+    nmaxlbl.pack(padx=5, pady=0, side=tk.LEFT)
+    nmaxnum = tk.Entry(rnd_sub_frame2, width=5)
+    nmaxnum.insert(0, "12")
+    nmaxnum.pack(padx=5, pady=0, side=tk.LEFT)
+    nminlbl = tk.Label(rnd_sub_frame2, text="Min(N/L):", bg="grey98", fg="#000", width=8)
+    nminlbl.pack(padx=5, pady=0, side=tk.LEFT)
+    nminnum = tk.Entry(rnd_sub_frame2, width=5)
+    nminnum.insert(0, "5")
+    nminnum.pack(padx=5, pady=0, side=tk.LEFT)
+    accurate = tk.IntVar(value=1)
+    accuratelbl = tk.Checkbutton(rnd_sub_frame2, text="Accurate", bg="grey98", fg="#000", variable=accurate)
+    accuratelbl.pack(padx=5, pady=0, side=tk.LEFT)
+
 
     ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
-    ctl_gframe.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=1)
+    ctl_gframe.pack(side=tk.LEFT, padx=5, pady=1, fill=tk.BOTH, expand=1)
     # read image:
     img = tk.PhotoImage(data=GetWisunImg())
     help_btn = tk.Button(ctl_gframe, command=None, image=img, bd=0, relief='flat', bg="grey98", fg="#000")
@@ -1006,6 +1079,8 @@ def main():
     update_status_progress_bar()
     # Start progress bar
     start_progress_bar()
+
+    update_gen_mode()
 
     _root.mainloop()
 
