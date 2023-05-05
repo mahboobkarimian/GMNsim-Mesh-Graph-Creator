@@ -17,7 +17,7 @@ from daggen import get_pos_dag as RndGetPos
 from managed_daggen import random_dag as MngRndMeshGen
 
 
-_VERSION = "0.4e"
+_VERSION = "0.5a"
 
 def get_sim_nodes():
     globalinfo.reset_connected_nodes()
@@ -937,7 +937,7 @@ def main():
     all_nodes = tk.Label(status_frame, text="?", anchor=tk.E, bg="grey98")
     all_nodes.pack(padx=1, pady=0, side=tk.RIGHT)
 
-    builder = GBuilder(_root,1500,700,"grey98", status)
+    builder = GBuilder(_root,1500,700,"#FFFFFD", status)
 
     # Create the labelframe
     sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
