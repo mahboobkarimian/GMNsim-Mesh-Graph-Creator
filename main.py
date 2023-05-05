@@ -832,7 +832,7 @@ def main():
         Mdegree = int(maxDegree.get())
         if Nnodes < 1:
             return
-        if genmode.get() == "Shaped":
+        if genmode.get() == "Semi-Managed":
             Alpha = alpha.get()
             Beta = beta.get()
             edges = RndMeshGen(Nnodes, Mdegree, float(Alpha), float(Beta))
@@ -900,7 +900,7 @@ def main():
             nminnum.config(state=tk.NORMAL)
             nmaxnum.config(state=tk.NORMAL)
             accuratelbl.config(state=tk.NORMAL)
-        elif genmode.get() == "Shaped":
+        elif genmode.get() == "Semi-Managed":
             alpha.config(state=tk.NORMAL)
             beta.config(state=tk.NORMAL)
             nlyrnum.config(state=tk.DISABLED)
@@ -986,8 +986,8 @@ def main():
     rnd_sub_frame2.pack(side=tk.TOP, padx=0, pady=0, expand=1, anchor=tk.W)
 
     genmode = tk.StringVar(value="Managed")
-    rbgemode1 = tk.Radiobutton(rnd_sub_frame0, text="Managed", variable=genmode, value="Managed", bg="grey98", width=8, anchor=tk.W, command=update_gen_mode)
-    rbgemode2 = tk.Radiobutton(rnd_sub_frame0, text="Shaped", variable=genmode, value="Shaped", bg="grey98", width=8, anchor=tk.W, command=update_gen_mode)
+    rbgemode1 = tk.Radiobutton(rnd_sub_frame0, text="Managed", variable=genmode, value="Managed", bg="grey98", width=12, anchor=tk.W, command=update_gen_mode)
+    rbgemode2 = tk.Radiobutton(rnd_sub_frame0, text="Semi-Managed", variable=genmode, value="Semi-Managed", bg="grey98", width=12, anchor=tk.W, command=update_gen_mode)
     rbgemode1.pack(pady=4, side=tk.BOTTOM)
     rbgemode2.pack(pady=4, side=tk.BOTTOM)
     
