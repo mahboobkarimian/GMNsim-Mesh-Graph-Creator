@@ -15,7 +15,8 @@ def gen_random_num_nodes_per_layer(m, n, min_val, max_val, nfl, accurate):
         """
         # Check if it's possible to generate n random numbers whose sum equals to m
         if n * min_val > m or n * max_val < m:
-            raise ValueError("Cannot generate n random numbers between min_val and max_val whose sum equals to m.")
+            print("Cannot generate n random numbers between min_val and max_val whose sum equals to m.")
+            return []
 
         numbers = []
         cnt = 0
