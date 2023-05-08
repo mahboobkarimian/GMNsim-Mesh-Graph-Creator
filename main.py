@@ -17,7 +17,11 @@ from daggen import get_pos_dag as RndGetPos
 from managed_daggen import random_dag as MngRndMeshGen
 
 
-_VERSION = "0.5a"
+_VERSION = "0.5b"
+_BG = "#292929"
+_FG = "#d9d9d9"
+_EBG = "#444444"
+_DBG = "#4e5552"
 
 def get_sim_nodes():
     globalinfo.reset_connected_nodes()
@@ -117,16 +121,71 @@ class Bt(tk.Button):
         tk.Button.__init__(self, *args, **kwargs)
         self['bg'] = '#0078d4'
         self['fg'] = 'white'
+        self['bd'] = 0
         self['activebackground'] = '#1092cb'
-        self['activeforeground'] = 'white'
-        self['relief'] = tk.SOLID
+        self['activeforeground'] = "white"
+        self['highlightbackground'] = _BG
+        self['relief'] = tk.FLAT
         if color == 'green':
             self['bg'] = "#25a004"
             self['activebackground'] = '#3ca858'
         elif color == 'red':
             self['bg'] = "#A0042a"
             self['activebackground'] = '#c3042a'
+        if self['image']:
+            self['bg'] = _BG
+            self['activebackground'] = _BG
+            self['highlightbackground'] = _BG
 
+class Rb(tk.Radiobutton):
+    def __init__ (self, *args, color=None, **kwargs):
+        tk.Radiobutton.__init__(self, *args, **kwargs)
+        self['bg'] = _BG
+        self['fg'] = _FG
+        self['selectcolor'] = _BG
+        self['bd'] = 0
+        self['activebackground'] = _BG
+        self['activeforeground'] = _FG
+        self['highlightbackground'] = _BG
+        self['relief'] = tk.FLAT
+
+class Lf(tk.LabelFrame):
+    def __init__ (self, *args, **kwargs):
+        tk.LabelFrame.__init__(self, *args, **kwargs)
+        self['bg'] = _BG
+        self['fg'] = _FG
+        self['bd'] = 1
+        self['relief'] = tk.GROOVE
+        self['highlightbackground'] = _BG
+
+class Cb(tk.Checkbutton):
+    def __init__ (self, *args, **kwargs):
+        tk.Checkbutton.__init__(self, *args, **kwargs)
+        self['bg'] = _BG
+        self['fg'] = _FG
+        self['activebackground'] = _BG
+        self['activeforeground'] = _FG
+        self['highlightbackground'] = _BG
+        self['selectcolor'] = _BG
+        self['bd'] = 0
+
+class Lb(tk.Label):
+    def __init__ (self, *args, **kwargs):
+        tk.Label.__init__(self, *args, **kwargs)
+        self['bg'] = _BG
+        self['fg'] = _FG
+
+class En(tk.Entry):
+    def __init__ (self, *args, **kwargs):
+        tk.Entry.__init__(self, *args, **kwargs)
+        self['bg'] = _EBG
+        self['fg'] = _FG
+        self['highlightbackground'] = _BG
+        self['insertbackground'] = _FG
+        self['disabledbackground'] = _DBG
+        self['disabledforeground'] = _EBG
+        self['bd'] = 0
+        self['relief'] = tk.FLAT
 ############################################################
 # Class: Node
 class Node:
@@ -193,6 +252,9 @@ class GBuilder:
         self.root = root
         self.status_bar = status_bar
         self.canvas = tk.Canvas(root, height=height, widt=width, bg=bgc)
+        self.canvas['bd'] = 0
+        self.canvas['highlightthickness'] = 0
+        self.canvas['relief'] = tk.FLAT
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.canvas_width = width
@@ -203,7 +265,7 @@ class GBuilder:
         # bind double click event:
         self.canvas.bind("<Double-Button-1>", self.canvas_mouseDoubleClick)
         self.canvas.bind("<Control-Button-1>", self.canvas_ctrlMouseRightClick)
-        dummy_node = Node(0, 0, 0, 0, canvas_name=self.canvas)
+        dummy_node = Node(-10, -10, 0, 0, canvas_name=self.canvas)
         self.nodes = [dummy_node]
         self.edges = []
         self.node_list_index = 0
@@ -404,7 +466,7 @@ class GBuilder:
         self.edges.clear()
 
         # 'Reset nodes:
-        dummy_node = Node(0, 0, 0, 0, canvas_name=self.canvas)
+        dummy_node = Node(-10, -10, 0, 0, canvas_name=self.canvas)
         self.nodes = [dummy_node]
         self.node_list_index = 0
 
@@ -455,7 +517,7 @@ class ConfigDialog(tk.Toplevel):
         super().__init__(parent)
 
         self.title("Simulation configuration")
-        self.configure(bg="grey98")
+        self.configure(bg=_BG)
         self.resizable(False, False)
         self.varTundev = VarTundev
         self.varNano = VarNano
@@ -464,42 +526,42 @@ class ConfigDialog(tk.Toplevel):
         self.varCleartmp = VarCleartmp
         self.varTunip = VarTunip
 
-        sim_frame = tk.Frame(self, bg = "grey98")
+        sim_frame = tk.Frame(self, bg = _BG)
         sim_frame.pack(side=tk.TOP, padx=5, anchor=tk.NW)
-        loglbl = tk.Label(sim_frame, text="Log:", bg="grey98", fg="#000")
+        loglbl = Lb(sim_frame, text="Log:")
         loglbl.pack(padx=5, pady=10, side=tk.LEFT)
-        self.log = tk.Entry(sim_frame)
+        self.log = En(sim_frame)
         self.log.insert(0, VarLog)
         self.log.pack(padx=5, pady=10, side=tk.LEFT)
         
-        Nano = tk.Checkbutton(sim_frame, text="IP stack log", variable=self.varNano, bg="grey98", fg="#000")
+        Nano = Cb(sim_frame, text="IP stack log", variable=self.varNano)
         Nano.pack(padx=1, pady=10, side=tk.LEFT)
         
-        Radio = tk.Checkbutton(sim_frame, text="MAC/RF log", variable=self.varRadio, bg="grey98", fg="#000")
+        Radio = Cb(sim_frame, text="MAC/RF log", variable=self.varRadio, bg=_BG, fg=_FG)
         Radio.pack(padx=1, pady=10, side=tk.LEFT)
         
-        Cleartmp = tk.Checkbutton(sim_frame, text="Clear /tmp logs", variable=self.varCleartmp, bg="grey98", fg="#000")
+        Cleartmp = Cb(sim_frame, text="Clear /tmp logs", variable=self.varCleartmp, bg=_BG, fg=_FG)
         Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
 
-        sim_frame1 = tk.Frame(self, bg = "grey98")
+        sim_frame1 = tk.Frame(self, bg = _BG)
         sim_frame1.pack(side=tk.TOP, padx=5, anchor=tk.NW)
         
-        Tundev = tk.Checkbutton(sim_frame1, text="Create TUN interface", variable=self.varTundev, bg="grey98", fg="#000")
+        Tundev = Cb(sim_frame1, text="Create TUN interface", variable=self.varTundev, bg=_BG, fg=_FG)
         Tundev.pack(padx=1, pady=10, side=tk.LEFT)
-        Tuniplbl = tk.Label(sim_frame1, text="TUN IP:", bg="grey98", fg="#000")
+        Tuniplbl = Lb(sim_frame1, text="TUN IP:")
         Tuniplbl.pack(padx=5, pady=10, side=tk.LEFT)
-        self.Tunip = tk.Entry(sim_frame1)
+        self.Tunip = En(sim_frame1)
         self.Tunip.insert(0, self.varTunip)
         self.Tunip.pack(padx=5, pady=10, side=tk.LEFT)
 
-        sim_frame2 = tk.Frame(self, bg = "grey98")
+        sim_frame2 = tk.Frame(self, bg = _BG)
         sim_frame2.pack(side=tk.TOP, padx=5, anchor=tk.NW)
-        war_label = tk.Label(sim_frame2, text="Tip: Close this window to interact again with main window!", bg="grey98", fg="Red")
+        war_label = tk.Label(sim_frame2, text="Tip: Close this window to interact again with main window!", bg=_BG, fg="Red")
         war_label.pack(side=tk.LEFT)
 
 
         # create OK and Cancel buttons
-        button_frame = tk.Frame(self, bg="grey98")
+        button_frame = tk.Frame(self, bg=_BG)
         button_frame.pack(side=tk.TOP, pady=10, padx=5, anchor=tk.SE)
         ok_button = Bt(button_frame, text="OK", command=self.ok)
         ok_button.pack(side=tk.RIGHT, padx=5)
@@ -539,7 +601,7 @@ class PlotDialog(tk.Toplevel):
         super().__init__(parent)
 
         self.title(" RPL Tree Plot")
-        self.configure(bg="grey98")
+        self.configure(bg=_BG)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Before making canvas, get some hints about size of the window
         # and fill gedges and gnodes
@@ -553,7 +615,7 @@ class PlotDialog(tk.Toplevel):
             CVS_W = 200
             CVS_H = 200
         # now create the canvas
-        self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg="grey98")
+        self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg=_EBG)
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         # draw the graph
@@ -596,9 +658,9 @@ class PlotDialog(tk.Toplevel):
         return line1, line2
     
     def draw_node(self, x, y, name):
-        ncolor = "#fff"
-        tcolor = "#000"
         tname = name
+        ncolor = "grey49"
+        tcolor = "white"
         if name == '0':
             tname = "BR"
             ncolor = "green"
@@ -921,28 +983,30 @@ def main():
         builder.reinddex_nodes_and_edges()
         update_status_progress_bar()
 
-    _root.configure(background="grey98")
+    _root.configure(background=_BG)
 
     # add status bar
-    status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg="grey98")
+    status_frame = tk.Frame(_root, bd=1, relief=tk.SUNKEN, bg=_BG)
     status_frame.pack(side=tk.BOTTOM, padx=5, pady=1, fill=tk.BOTH, expand=0)
-    status = tk.Label(status_frame, text="Ready", anchor=tk.W, bg="grey98")
+    status = Lb(status_frame, text="Ready", anchor=tk.W)
     status.pack(padx=5, pady=0, side=tk.LEFT)
     # Version 0.MONTH+ABCDE...
-    version = tk.Label(status_frame, text="v. " + _VERSION, anchor=tk.E, bg="grey98", fg="grey")
+    version = tk.Label(status_frame, text="v. " + _VERSION, anchor=tk.E, bg=_BG, fg="grey")
     version.pack(padx=5, pady=0, side=tk.RIGHT)
     # Progress bar
     progress_bar = ttk.Progressbar(status_frame, style='blue.Horizontal.TProgressbar',orient=tk.HORIZONTAL, length=120, mode='determinate')
     progress_bar.pack(padx=0, pady=0, side=tk.RIGHT)
-    all_nodes = tk.Label(status_frame, text="?", anchor=tk.E, bg="grey98")
+    all_nodes = Lb(status_frame, text="?", anchor=tk.E)
     all_nodes.pack(padx=1, pady=0, side=tk.RIGHT)
+    elapsed_time = Lb(status_frame, text="?", anchor=tk.E)
+    elapsed_time.pack(padx=1, pady=0, side=tk.RIGHT)
 
-    builder = GBuilder(_root,1500,700,"#FFFFFD", status)
+    builder = GBuilder(_root,1500,700, _EBG, status)
 
     # Create the labelframe
-    sim_frame = tk.LabelFrame(_root, text="Simulator", bg="grey98")
+    sim_frame = Lf(_root, text="Simulator")
     sim_frame.pack(side=tk.BOTTOM, padx=5, pady=1, fill=tk.BOTH, expand=0)
-    simDirlbl = tk.Label(sim_frame, text="Simulator location:", bg="grey98", fg="#000")
+    simDirlbl = Lb(sim_frame, text="Simulator location:")
     simDirlbl.pack(padx=5, pady=10, side=tk.LEFT)
     select_dir_btn = Bt(sim_frame, command=select_dir, text="Select")
     select_dir_btn.pack(padx=5, pady=10, side=tk.LEFT)
@@ -951,15 +1015,15 @@ def main():
     export_grf_btn = Bt(sim_frame, command=export_runscript, text="Export runscript")
     export_grf_btn.pack(padx=10, pady=10, side=tk.LEFT)
     #varDocker = tk.IntVar()
-    #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg="grey98", fg="#000")
+    #Docker = tk.Checkbutton(sim_frame, text="Export for Docker", variable=varDocker, bg=_BG, fg=_FG)
     #Docker.pack(padx=1, pady=10, side=tk.LEFT)
     sim_path = tk.StringVar(value="$(pwd)")
-    selection_frame=tk.Frame(sim_frame, bg="grey98")
+    selection_frame=tk.Frame(sim_frame, bg=_BG)
     selection_frame.pack(padx=10, pady=0, side=tk.LEFT)
     selected_plot_opt = tk.StringVar(value="Dynamic plot")
     # create 2 radio buttons for RPL plot
-    rb1 = tk.Radiobutton(selection_frame, text="Static plot (Matplotlib)", variable=selected_plot_opt, value="Static plot", bg="grey98", width=18, anchor=tk.W)
-    rb2 = tk.Radiobutton(selection_frame, text="Dynamic plot (Native)", variable=selected_plot_opt, value="Dynamic plot", bg="grey98", width=18, anchor=tk.W)
+    rb1 = Rb(selection_frame, text="Static plot (Matplotlib)", variable=selected_plot_opt, value="Static plot", width=18, anchor=tk.W)
+    rb2 = Rb(selection_frame, text="Dynamic plot (Native)", variable=selected_plot_opt, value="Dynamic plot", width=18, anchor=tk.W)
     rb1.pack(pady=0)
     rb2.pack(pady=0)
     plt_rpl = Bt(sim_frame, command=draw_sim_topology, text="RPL plot")
@@ -974,74 +1038,74 @@ def main():
     stop_sim_btn.pack(padx=10, pady=10, side=tk.RIGHT)
 
 
-    rnd_gframe = tk.LabelFrame(_root, text="Random Mesh Graph", bg="grey98", height=100)
+    rnd_gframe = Lf(_root, text="Random Mesh Graph", height=100)
     rnd_gframe.pack(side=tk.LEFT, padx=5, pady=1, fill=tk.BOTH, expand=1)
     generate_btn = Bt(rnd_gframe, command=get_random_mesh_graph, text="Generate")
     generate_btn.pack(padx=5, pady=10, side=tk.RIGHT)
-    rnd_sub_frame0 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame0 = tk.Frame(rnd_gframe, bg=_BG)
     rnd_sub_frame0.pack(side=tk.LEFT, padx=0, pady=0, expand=0, anchor=tk.W)
-    rnd_sub_frame1 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame1 = tk.Frame(rnd_gframe, bg=_BG)
     rnd_sub_frame1.pack(side=tk.TOP, padx=0, pady=0, expand=1, anchor=tk.W)
-    rnd_sub_frame2 = tk.Frame(rnd_gframe, bg="grey98")
+    rnd_sub_frame2 = tk.Frame(rnd_gframe, bg=_BG)
     rnd_sub_frame2.pack(side=tk.TOP, padx=0, pady=0, expand=1, anchor=tk.W)
 
     genmode = tk.StringVar(value="Managed")
-    rbgemode1 = tk.Radiobutton(rnd_sub_frame0, text="Managed", variable=genmode, value="Managed", bg="grey98", width=12, anchor=tk.W, command=update_gen_mode)
-    rbgemode2 = tk.Radiobutton(rnd_sub_frame0, text="Semi-Managed", variable=genmode, value="Semi-Managed", bg="grey98", width=12, anchor=tk.W, command=update_gen_mode)
+    rbgemode1 = Rb(rnd_sub_frame0, text="Managed", variable=genmode, value="Managed", width=12, anchor=tk.W, command=update_gen_mode)
+    rbgemode2 = Rb(rnd_sub_frame0, text="Semi-Managed", variable=genmode, value="Semi-Managed", width=12, anchor=tk.W, command=update_gen_mode)
     rbgemode1.pack(pady=4, side=tk.BOTTOM)
     rbgemode2.pack(pady=4, side=tk.BOTTOM)
     
-    nSimNodeslbl = tk.Label(rnd_sub_frame1, text="Nodes:", bg="grey98", fg="#000", width=7)
+    nSimNodeslbl = Lb(rnd_sub_frame1, text="Nodes:", width=7)
     nSimNodeslbl.pack(padx=5, pady=0, side=tk.LEFT)
-    nSimNodes = tk.Entry(rnd_sub_frame1, width=5)
+    nSimNodes = En(rnd_sub_frame1, width=5)
     nSimNodes.insert(0, "50")
     nSimNodes.pack(padx=5, pady=0, side=tk.LEFT)
-    maxDegreelbl = tk.Label(rnd_sub_frame1, text="Max(NBR):", bg="grey98", fg="#000", width=8)
+    maxDegreelbl = Lb(rnd_sub_frame1, text="Max(NBR):",  width=8)
     maxDegreelbl.pack(padx=5, pady=0, side=tk.LEFT)
-    maxDegree = tk.Entry(rnd_sub_frame1, width=5)
+    maxDegree = En(rnd_sub_frame1, width=5)
     maxDegree.insert(0, "5")
     maxDegree.pack(padx=5, pady=0, side=tk.LEFT)
-    alphalbl = tk.Label(rnd_sub_frame1, text="Shape:", bg="grey98", fg="#000", width=8)
+    alphalbl = Lb(rnd_sub_frame1, text="Shape:",  width=8)
     alphalbl.pack(padx=5, pady=0, side=tk.LEFT)
-    alpha = tk.Entry(rnd_sub_frame1, width=5)
+    alpha = En(rnd_sub_frame1, width=5)
     alpha.insert(0, "1")
     alpha.pack(padx=5, pady=0, side=tk.LEFT)
-    betalbl = tk.Label(rnd_sub_frame1, text="Regularity:", bg="grey98", fg="#000", width=8)
+    betalbl = Lb(rnd_sub_frame1, text="Regularity:",  width=8)
     betalbl.pack(padx=5, pady=0, side=tk.LEFT)
-    beta = tk.Entry(rnd_sub_frame1, width=5)
+    beta = En(rnd_sub_frame1, width=5)
     beta.insert(0, "0.5")
     beta.pack(padx=5, pady=0, side=tk.LEFT)
 
-    nlyrlbl = tk.Label(rnd_sub_frame2, text="Layers:", bg="grey98", fg="#000", width=7)
+    nlyrlbl = Lb(rnd_sub_frame2, text="Layers:",  width=7)
     nlyrlbl.pack(padx=5, pady=0, side=tk.LEFT)
-    nlyrnum = tk.Entry(rnd_sub_frame2, width=5)
+    nlyrnum = En(rnd_sub_frame2, width=5)
     nlyrnum.insert(0, "6")
     nlyrnum.pack(padx=5, pady=0, side=tk.LEFT)
-    n1stlbl = tk.Label(rnd_sub_frame2, text="N/L1:", bg="grey98", fg="#000", width=8)
+    n1stlbl = Lb(rnd_sub_frame2, text="N/L1:",  width=8)
     n1stlbl.pack(padx=5, pady=0, side=tk.LEFT)
-    n1stnum = tk.Entry(rnd_sub_frame2, width=5)
+    n1stnum = En(rnd_sub_frame2, width=5)
     n1stnum.insert(0, "4")
     n1stnum.pack(padx=5, pady=0, side=tk.LEFT)
-    nmaxlbl = tk.Label(rnd_sub_frame2, text="Max(N/L):", bg="grey98", fg="#000", width=8)
+    nmaxlbl = Lb(rnd_sub_frame2, text="Max(N/L):",  width=8)
     nmaxlbl.pack(padx=5, pady=0, side=tk.LEFT)
-    nmaxnum = tk.Entry(rnd_sub_frame2, width=5)
+    nmaxnum = En(rnd_sub_frame2, width=5)
     nmaxnum.insert(0, "12")
     nmaxnum.pack(padx=5, pady=0, side=tk.LEFT)
-    nminlbl = tk.Label(rnd_sub_frame2, text="Min(N/L):", bg="grey98", fg="#000", width=8)
+    nminlbl = Lb(rnd_sub_frame2, text="Min(N/L):",  width=8)
     nminlbl.pack(padx=5, pady=0, side=tk.LEFT)
-    nminnum = tk.Entry(rnd_sub_frame2, width=5)
+    nminnum = En(rnd_sub_frame2, width=5)
     nminnum.insert(0, "5")
     nminnum.pack(padx=5, pady=0, side=tk.LEFT)
     accurate = tk.IntVar(value=1)
-    accuratelbl = tk.Checkbutton(rnd_sub_frame2, text="Accurate", bg="grey98", fg="#000", variable=accurate)
+    accuratelbl = Cb(rnd_sub_frame2, text="Accurate",  variable=accurate)
     accuratelbl.pack(padx=5, pady=0, side=tk.LEFT)
 
 
-    ctl_gframe = tk.LabelFrame(_root, text="Control Graph", bg="grey98", height=100)
+    ctl_gframe = Lf(_root, text="Control Graph", height=100)
     ctl_gframe.pack(side=tk.LEFT, padx=5, pady=1, fill=tk.BOTH, expand=1)
     # read image:
     img = tk.PhotoImage(data=GetWisunImg())
-    help_btn = tk.Button(ctl_gframe, command=None, image=img, bd=0, relief='flat', bg="grey98", fg="#000")
+    help_btn = Bt(ctl_gframe, command=None, image=img)
     help_btn.pack(padx=10, pady=10, side=tk.RIGHT)
     import_btn = Bt(ctl_gframe, command=_import, text="Import")
     import_btn.pack(padx=10, pady=10, side=tk.LEFT)
