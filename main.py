@@ -142,7 +142,7 @@ class Rb(tk.Radiobutton):
         tk.Radiobutton.__init__(self, *args, **kwargs)
         self['bg'] = _BG
         self['fg'] = _FG
-        self['selectcolor'] = _BG
+        self['selectcolor'] = _EBG
         self['bd'] = 0
         self['activebackground'] = _BG
         self['activeforeground'] = _FG
@@ -166,7 +166,7 @@ class Cb(tk.Checkbutton):
         self['activebackground'] = _BG
         self['activeforeground'] = _FG
         self['highlightbackground'] = _BG
-        self['selectcolor'] = _BG
+        self['selectcolor'] = _EBG
         self['bd'] = 0
 
 class Lb(tk.Label):
