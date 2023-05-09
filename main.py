@@ -8,6 +8,9 @@ from tkinter import filedialog as filedialog
 import time
 from tkinter import ttk
 import dbus
+from matplotlib import pyplot as plt
+import numpy as np
+from sklearn.cluster import KMeans
 
 from confgen import configure as SimConfGen
 from assets import bs64_wisun_img as GetWisunImg
@@ -25,6 +28,8 @@ _DBG = "#4e5552"
 
 def get_sim_nodes():
     globalinfo.reset_connected_nodes()
+    if not is_sim_running():
+        return None, None
     bus = dbus.SessionBus()
     interface_name = 'com.silabs.Wisun.BorderRouter'
     object_path = '/com/silabs/Wisun/BorderRouter'
@@ -55,14 +60,19 @@ def get_sim_nodes():
         gedges.append((nname,pname))
         gnodes.append(nname)
     globalinfo.set_connected_nodes(len(gnodes))
+    globalinfo.set_ref_timestamp(time.time())
+    globalinfo.set_nodes_timestamp(gnodes, time.time())
     return gnodes, gedges
 
 def is_sim_running():
-    process_name = 'wssimserver'
+    process1_name = 'wssimserver'
+    process2_name = 'wsbrd'
     pid = None
     try:
-        pid = subprocess.check_output(['pgrep', process_name])
+        pid = subprocess.check_output(['pgrep', process1_name])
         pid = pid.decode().strip()
+        # dummy check also if border router is running
+        _pid = subprocess.check_output(['pgrep', process2_name])
     except subprocess.CalledProcessError:
         print("No simulation running")
     return pid
@@ -73,6 +83,7 @@ class GlobalInfo:
         self.total_nodes = 0
         self.connected_nodes = 0
         self.sim_settings = dict()
+        self.conn_timestamp = dict()
     
     def set_total_nodes(self, num_nodes):
         self.total_nodes = num_nodes
@@ -113,7 +124,25 @@ class GlobalInfo:
 
     def get_sim_settings(self):
         return self.sim_settings
+    
+    def set_ref_timestamp(self, timestamp):
+        if 'ref' not in self.conn_timestamp.keys():
+            self.conn_timestamp['ref'] = timestamp
+    
+    def set_nodes_timestamp(self, nodes, timestamp):
+        for a_node in nodes:
+            if a_node not in self.conn_timestamp.keys():
+                self.conn_timestamp[a_node] = timestamp
+    
+    def get_all_timestamp(self):
+        return self.conn_timestamp
 
+    def del_node_timestamp(self, node):
+        if node in self.conn_timestamp.keys():
+            del self.conn_timestamp[node]
+    
+    def del_all_timestamp(self):
+        self.conn_timestamp.clear()
 ############################################################
 # Class: Theme
 class Bt(tk.Button):
@@ -550,7 +579,7 @@ class ConfigDialog(tk.Toplevel):
         Tundev.pack(padx=1, pady=10, side=tk.LEFT)
         Tuniplbl = Lb(sim_frame1, text="TUN IP:")
         Tuniplbl.pack(padx=5, pady=10, side=tk.LEFT)
-        self.Tunip = En(sim_frame1)
+        self.Tunip = En(sim_frame1, width=35)
         self.Tunip.insert(0, self.varTunip)
         self.Tunip.pack(padx=5, pady=10, side=tk.LEFT)
 
@@ -885,6 +914,7 @@ def main():
             if builder.node_list_index < 1:
                 globalinfo.reset_total_nodes()
             update_status_progress_bar()
+            globalinfo.del_all_timestamp()
         except subprocess.CalledProcessError:
             print("No simulation running")
             tk.messagebox.showwarning(title="No simulation running", message="No simulation running")
@@ -917,6 +947,51 @@ def main():
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         update_status_progress_bar()
         return edges
+
+    def drae_connection_time():
+        # !! Copy the dict becuase it is passed by reference, any modification will affect the original dict
+        tss = globalinfo.get_all_timestamp().copy()
+        if len(tss) != 0:
+            #tss = {'ref': 1683561755.1005516, '32345603': 1683561824.0648172, '32345604': 1683561824.0648172, '32345601': 1683561825.2489476, '323456015': 1683561825.2489476, '32345602': 1683561826.385973, '32345606': 1683561884.6940851, '32345607': 1683561889.2430131, '32345605': 1683561891.500941, '32345609': 1683561892.6465416, '323456016': 1683561898.3393831, '323456018': 1683561899.5295408, '323456017': 1683561901.8306823, '32345608': 1683561904.0679207, '323456019': 1683561906.346794, '323456020': 1683561919.9453602, '323456010': 1683561949.4046113, '323456011': 1683561953.9771814, '323456014': 1683561956.2122586, '323456013': 1683561964.1541753, '323456012': 1683561966.4329965}
+            ref = tss['ref']
+            print('tss: ', tss)
+            tss.pop('ref')
+            yy = list(tss.values())
+            yy = [y - ref for y in yy]
+            xx = list(tss.keys())
+            xx = [int(str(x)[6:7]) * 256 + int(str(x)[7:]) for x in xx]
+            print('lbl: ', xx)
+            fig, (ax, bx) = plt.subplots(1, 2, figsize=(15, 8))
+            ax.bar(xx, yy)
+            ax.set_ylabel('Connection time (s)')
+            ax.set_xlabel('Node index')
+            ax.set_xticks(xx)
+            ax.set_yticks(range(0, int(max(yy)), 20))
+            ax.set_axisbelow(True)
+            ax.yaxis.grid(True, color='#EEEEEE')
+            ax.xaxis.grid(False)
+            ax.set_title('Connection time for each node')
+            fig.tight_layout()
+            '''
+            X = np.array(yy).reshape(-1, 1)
+            sse = []
+            for k in range(1, 7):
+                kmeans = KMeans(n_clusters=k, init='k-means++', random_state=42, n_init='auto')
+                kmeans.fit(X)
+                sse.append(kmeans.inertia_)
+
+            kl = KneeLocator(range(1, 7), sse, curve="convex", direction="decreasing")
+            print('kl: ', kl.elbow)
+            ncls = kl.elbow
+            # Cluster the data using the optimal number of clusters
+            kmeans = KMeans(n_clusters=ncls, init='k-means++', random_state=42, n_init='auto')
+            kmeans.fit_predict(X)
+            labels = kmeans.predict(X)
+            bx.scatter(X, np.zeros_like(X), c=labels)
+            bx.set_title('Groupe of nodes in each layer')
+            bx.set_xlabel('Connection time (s)')
+            '''
+            plt.show()
 
     def draw_sim_topology():
         gnodes, gedges = get_sim_nodes()
@@ -951,7 +1026,7 @@ def main():
                 get_sim_nodes()
             if globalinfo.get_total_nodes() > 0:
                 update_status_progress_bar()
-        _root.after(20000, start_progress_bar)
+        _root.after(1000, start_progress_bar)
 
     def update_gen_mode():
         if genmode.get() == "Managed":
@@ -1028,7 +1103,7 @@ def main():
     rb2.pack(pady=0)
     plt_rpl = Bt(sim_frame, command=draw_sim_topology, text="RPL plot")
     plt_rpl.pack(padx=10, pady=10, side=tk.LEFT)
-    conn_time = Bt(sim_frame, command=None, text="Connection time")
+    conn_time = Bt(sim_frame, command=drae_connection_time, text="Connection time")
     conn_time.pack(padx=10, pady=10, side=tk.LEFT)
     mk_report = Bt(sim_frame, command=None, text="Create report")
     mk_report.pack(padx=10, pady=10, side=tk.LEFT)
