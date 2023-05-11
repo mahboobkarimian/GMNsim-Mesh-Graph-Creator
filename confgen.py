@@ -25,7 +25,7 @@ def configure(num_nodes, edges, dir, cleanup, add_tun, tunip, log_nano, log_radi
         tpg += f"-g {n1},{n2} "
 
     # run server
-    config['RUN_SVR'] = f"gnome-terminal --tab -- {dir}/wssimserver {tpg} /tmp/sim_socket --dump"
+    config['RUN_SVR'] = f"gnome-terminal --tab -- {dir}/wssimserver {tpg} /tmp/sim_socket --dump -f"
     config['SLEEP'] = "sleep 0.5"
 
     # run phy/mac

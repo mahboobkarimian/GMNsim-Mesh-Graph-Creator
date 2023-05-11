@@ -17,6 +17,7 @@ from assets import bs64_wisun_img as GetWisunImg
 from daggen import random_mesh_graph_gen as RndMeshGen
 from daggen import plot_dag_as_tree as MeshPlot
 from daggen import get_pos_dag as RndGetPos
+from daggen import get_graph_diameter as GrphDiameter
 from managed_daggen import random_dag as MngRndMeshGen
 
 
@@ -474,6 +475,18 @@ class GBuilder:
             self.edges.append(edge)
         globalinfo.set_total_nodes(num_raw_nodes)
     
+
+    def get_graph_diameter_from_edges(self):
+        if len(self.edges) == 0:
+            return 1
+        edges = []
+        if len(self.edges[0]) > 2:
+            edges = [(x, y) for x, y, m, l in self.edges]
+        else:
+            edges =[(x, y) for x, y in self.edges]
+        return GrphDiameter(edges)
+    
+
     def change_labels_to_hex(self):
         if not self.id_textMode:
             self.id_textMode = 1
@@ -771,17 +784,33 @@ def main():
 
     def retrive_sim_info():
     # Check the number of MAC/PHY processes as TOTAL_NODES:
-        try:
-            pids = subprocess.check_output(["pgrep", "wshwsim"])
-            if pids:
-                answer = tk.messagebox.askyesno("A simulation found running.","Do you want to retrieve its information?")
-                if answer:
+        if is_sim_running():
+            
+            answer = tk.messagebox.askyesno("A simulation found running.","Do you want to retrieve its information?")
+            if answer:
+                filename = "/tmp/graph.txt"
+                if os.path.exists(filename):
+                    read_sim_dump(filename)
+                else:
+                    pids = subprocess.check_output(["pgrep", "wshwsim"])
                     pids = pids.decode('utf-8').split('\n')
                     globalinfo.set_total_nodes(len(pids) - 2)
-                else:
-                    globalinfo.reset_total_nodes()
-        except:
-            pass
+            else:
+                globalinfo.reset_total_nodes()
+
+    def read_sim_dump(file):
+        with open(file, 'r') as f:
+            lines = f.readlines()
+            edges = []
+            nodes = int(lines[0])
+            for _l in lines[1:]:
+                _edge = _l.split(',')
+                e1 = int(_edge[0])
+                e2 = int(_edge[1])
+                if [e2, e1] not in edges:
+                    edges.append([e1, e2])
+            builder.draw_graph_from_list(nodes, edges)
+            
 
     def on_window_close():
         sim_settings = globalinfo.get_sim_settings()
@@ -954,43 +983,42 @@ def main():
         if len(tss) != 0:
             #tss = {'ref': 1683561755.1005516, '32345603': 1683561824.0648172, '32345604': 1683561824.0648172, '32345601': 1683561825.2489476, '323456015': 1683561825.2489476, '32345602': 1683561826.385973, '32345606': 1683561884.6940851, '32345607': 1683561889.2430131, '32345605': 1683561891.500941, '32345609': 1683561892.6465416, '323456016': 1683561898.3393831, '323456018': 1683561899.5295408, '323456017': 1683561901.8306823, '32345608': 1683561904.0679207, '323456019': 1683561906.346794, '323456020': 1683561919.9453602, '323456010': 1683561949.4046113, '323456011': 1683561953.9771814, '323456014': 1683561956.2122586, '323456013': 1683561964.1541753, '323456012': 1683561966.4329965}
             ref = tss['ref']
-            print('tss: ', tss)
+            #print('tss: ', tss)
             tss.pop('ref')
             yy = list(tss.values())
             yy = [y - ref for y in yy]
             xx = list(tss.keys())
             xx = [int(str(x)[6:7]) * 256 + int(str(x)[7:]) for x in xx]
-            print('lbl: ', xx)
+            #print('lbl: ', xx)
             fig, (ax, bx) = plt.subplots(1, 2, figsize=(15, 8))
-            ax.bar(xx, yy)
+            colours = plt.get_cmap('Blues')(np.linspace(0.2, 0.9, len(xx)))
+            ax.bar(xx, yy, color=colours)
             ax.set_ylabel('Connection time (s)')
             ax.set_xlabel('Node index')
-            ax.set_xticks(xx)
+            ax.set_xticks(range(0, int(max(xx)), 3))
             ax.set_yticks(range(0, int(max(yy)), 20))
             ax.set_axisbelow(True)
             ax.yaxis.grid(True, color='#EEEEEE')
             ax.xaxis.grid(False)
             ax.set_title('Connection time for each node')
-            fig.tight_layout()
-            '''
+            
+            ncls = builder.get_graph_diameter_from_edges()
+            print(ncls)
             X = np.array(yy).reshape(-1, 1)
-            sse = []
-            for k in range(1, 7):
-                kmeans = KMeans(n_clusters=k, init='k-means++', random_state=42, n_init='auto')
-                kmeans.fit(X)
-                sse.append(kmeans.inertia_)
-
-            kl = KneeLocator(range(1, 7), sse, curve="convex", direction="decreasing")
-            print('kl: ', kl.elbow)
-            ncls = kl.elbow
             # Cluster the data using the optimal number of clusters
             kmeans = KMeans(n_clusters=ncls, init='k-means++', random_state=42, n_init='auto')
             kmeans.fit_predict(X)
             labels = kmeans.predict(X)
-            bx.scatter(X, np.zeros_like(X), c=labels)
+            labels = [l+1 for l in labels]
+            bx.scatter(labels, X, c=labels)
+            bx.set_xticks(range(0, ncls))
+            #bx.set_xticklabels([f"cat_{x}" for x in range(0,ncls)])
+            bx.grid(True, color='#EEEEEE')
             bx.set_title('Groupe of nodes in each layer')
-            bx.set_xlabel('Connection time (s)')
-            '''
+            bx.set_ylabel('Connection time (s)')
+            bx.set_ylabel('Catagory')
+
+            fig.tight_layout()
             plt.show()
 
     def draw_sim_topology():

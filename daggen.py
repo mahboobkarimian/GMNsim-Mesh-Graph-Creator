@@ -174,9 +174,6 @@ def plot_dag_as_tree(edges,postion):
 def get_pos_dag(edges):
     g1 = nx.DiGraph()
     g1.add_edges_from(edges)
-    #nx.draw_networkx(g1, arrows=True, pos=postion)
-    #plt.savefig("DAG.png", format="PNG")
-    #return plt.clf
     for layer, nodes in enumerate(nx.topological_generations(g1)):
     # `multipartite_layout` expects the layer as a node attribute, so add the
     # numeric layer value as a node attribute
@@ -185,12 +182,12 @@ def get_pos_dag(edges):
 
     # Compute the multipartite_layout using the "layer" node attribute
     pos = nx.multipartite_layout(g1, subset_key="layer")
-    #for k in pos:
-    #    pos[k][-1] *= -1
-    #del[pos['Exit']]
-    # convert '0' to 0
-    #pos[0] = pos.pop('0')
     return pos
+
+def get_graph_diameter(edges):
+    G = nx.Graph()
+    G.add_edges_from(edges)
+    return nx.diameter(G)
 
 def search_for_successors(node, edges):
         '''
