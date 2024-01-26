@@ -21,6 +21,11 @@ Create a python virtual environment and install dependencies via `pip` and `requ
 
 To run simulations, you need to get a copy of mbed simulator from https://github.com/mahboobkarimian/wisun-mbed-simulator.
 
+## Live mesh view
+
+You can monitor how nodes are connecting and mesh network develops. This fast video shows the mesh evolution continues after all nodes are connected.
+<video src="all_connected.mp4" width="800"></video>
+
 ## Drawing nodes and edges
 
 The process of creating a graph is straightforward.
