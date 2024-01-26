@@ -1,8 +1,10 @@
-# Mesh Graph Creator
+# Wi-SUN Simulator GUI
 
-Mesh Graph Creator is a tool that provides a simple graphical interface for drawing and generating custom or random graphs. It is primarily designed to create graphs that can be used with a mesh network simulator based on the Mbed OS.
+Wi-SUN Simulator GUI is a tool that provides a simple graphical interface for drawing and generating custom or random graphs. It is primarily designed to create graphs that can be used with a mesh network simulator based on the Mbed OS.
 
-There are 2 modes to generate graph.
+The GUI is capable of running and managing the simulation. There is also a live view of mesh network evolutions.
+
+There are 2 modes to generate a graph. 
 
 <img src="screenshot.png" alt="sim" width="800"/>
 
@@ -16,6 +18,8 @@ sudo apt install graphviz graphviz-dev
 sudo apt install build-essential
 ```
 Create a python virtual environment and install dependencies via `pip` and `requirements.txt`
+
+To run simulations, you need to get a copy of mbed simulator from https://github.com/mahboobkarimian/wisun-mbed-simulator.
 
 ## Drawing nodes and edges
 
