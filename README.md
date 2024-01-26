@@ -2,6 +2,20 @@
 
 Mesh Graph Creator is a tool that provides a simple graphical interface for drawing and generating custom or random graphs. It is primarily designed to create graphs that can be used with a mesh network simulator based on the Mbed OS.
 
+There are 2 modes to generate graph.
+
+<img src="screenshot.png" alt="sim" width="800"/>
+
+## Install
+
+A few dependencies should be installed first:
+```bash
+sudo apt install libdbus-1-dev
+sudo apt install libglib2.0-dev
+sudo apt install graphviz graphviz-dev
+sudo apt install build-essential
+```
+Create a python virtual environment and install dependencies via `pip` and `requirements.txt`
 
 ## Drawing nodes and edges
 
