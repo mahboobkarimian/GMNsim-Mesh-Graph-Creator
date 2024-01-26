@@ -24,7 +24,9 @@ To run simulations, you need to get a copy of mbed simulator from https://github
 ## Live mesh view
 
 You can monitor how nodes are connecting and mesh network develops. This fast video shows the mesh evolution continues after all nodes are connected.
-<video src="all_connected.mp4" width="800"></video>
+
+https://github.com/mahboobkarimian/wi-sun-simulator-gui/assets/63875592/6c873fc0-7977-4226-933a-aa733a7fa438
+
 
 ## Drawing nodes and edges
 
