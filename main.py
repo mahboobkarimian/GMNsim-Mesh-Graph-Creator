@@ -642,8 +642,8 @@ class PlotDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.title(" RPL Tree Plot")
-        self.configure(bg=_BG)
+        self.title("Live Mesh")
+        self.configure(bg='gray35')
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Before making canvas, get some hints about size of the window
         # and fill gedges and gnodes
@@ -657,7 +657,7 @@ class PlotDialog(tk.Toplevel):
             CVS_W = 200
             CVS_H = 200
         # now create the canvas
-        self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg=_EBG)
+        self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg="gray45")
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         # draw the graph
@@ -701,7 +701,7 @@ class PlotDialog(tk.Toplevel):
     
     def draw_node(self, x, y, name):
         tname = name
-        ncolor = "grey49"
+        ncolor = "grey10"
         tcolor = "white"
         if name == '0':
             tname = "BR"
