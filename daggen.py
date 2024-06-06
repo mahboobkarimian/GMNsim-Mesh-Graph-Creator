@@ -133,7 +133,7 @@ def plot_dag(edges,postion):
     plt.show()
 
 
-def plot_dag_as_tree(edges,postion):
+def plot_dag_as_tree(edges, postion=False, dag=False):
     G = nx.from_edgelist(edges)
     DG = nx.DiGraph()
     root = '32345600'
@@ -168,6 +168,16 @@ def plot_dag_as_tree(edges,postion):
     if postion == True:
         # scale poses:
         return pos
+    if dag == True:
+        labeldict['32345600'] = 0
+        new_dag = nx.DiGraph()
+        for u, v in DG.edges():
+            new_u = labeldict[u]
+            new_v = labeldict[v]
+            # Add the new edge to the new graph
+            new_dag.add_edge(new_u, new_v)
+        return new_dag
+
     nx.draw(DG, pos, labels=labeldict, arrows=False)
     plt.show()
 

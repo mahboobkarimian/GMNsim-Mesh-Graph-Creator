@@ -15,7 +15,7 @@ from sklearn.cluster import KMeans
 from confgen import configure as SimConfGen
 from assets import bs64_wisun_img as GetWisunImg
 from daggen import random_mesh_graph_gen as RndMeshGen
-from daggen import plot_dag_as_tree as MeshPlot
+from daggen import plot_dag_as_tree as MeshPlotGetPosGetDag
 from daggen import get_pos_dag as RndGetPos
 from daggen import get_graph_diameter as GrphDiameter
 from managed_daggen import random_dag as MngRndMeshGen
@@ -660,12 +660,27 @@ class PlotDialog(tk.Toplevel):
         self.canvas = tk.Canvas(self, width=CVS_W, height=CVS_H, bg="gray45")
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
+        export_button = Bt(self, text="Export DAG", command=self.export_dag)
+        export_button.pack(side=tk.RIGHT, pady=2)
+
         # draw the graph
         self.draw_graph(pos)
 
         # update the graph every 1 sec
         self.update_graph()
         
+    def export_dag(self):
+        gnodes, gedges = get_sim_nodes()
+        if len(gedges):
+            _dag = MeshPlotGetPosGetDag(gedges, False, True)
+            if _dag:
+                _edges = list(_dag.edges())
+                filename = "dag_" + str(time.strftime("%d_%H_%M_%S_n")) + ".dag"
+                with open(filename, "w") as f:
+                    f.write(f"{_edges}\n")
+        else:
+            print("No edges available yet ... try again later")
+    
     def update_graph(self):
         self.canvas.delete("all")
         pos, CVS_W, CVS_H = self.get_pos_w_h()
@@ -726,7 +741,7 @@ class PlotDialog(tk.Toplevel):
         gnodes.append(bordernode)
         self.gedges = gedges
         self.gnodes = gnodes
-        return MeshPlot(gedges, True)
+        return MeshPlotGetPosGetDag(gedges, True, False)
 
     def get_pos_w_h(self):
         pos = self.get_sim_topology()
@@ -972,7 +987,7 @@ def main():
             if len(edges) == 0:
                 tk.messagebox.showwarning(title="Warning", message="No solution found, adjust parameters and try again")
                 return
-        #RndMeshPlot(edges, None) # plot the by matplotlib
+        #RndMeshPlotGetPosGetDag(edges, None) # plot the by matplotlib
         builder.draw_graph_from_list(Nnodes, edges) # plot in canvas
         update_status_progress_bar()
         return edges
@@ -1027,7 +1042,7 @@ def main():
         if selected_plot_opt.get() == "Static plot":
             if gnodes is None or gedges is None:
                 return
-            MeshPlot(gedges, None)
+            MeshPlotGetPosGetDag(gedges, False, False)
         else:
             open_plot_dialog()
     
