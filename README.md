@@ -4,7 +4,7 @@ Wi-SUN Simulator GUI is a tool that provides a simple graphical interface for dr
 
 The GUI is capable of running and managing the simulation. There is also a live view of mesh network evolutions.
 
-There are 2 modes to generate a graph. 
+There are 2 modes to generate a graph.
 
 <img src="screenshot.png" alt="sim" width="800"/>
 
@@ -20,6 +20,9 @@ sudo apt install build-essential
 Create a python virtual environment and install dependencies via `pip` and `requirements.txt`
 
 To run simulations, you need to get a copy of mbed simulator from https://github.com/mahboobkarimian/wisun-mbed-simulator.
+
+
+Before running, export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
 
 ## Live mesh view
 

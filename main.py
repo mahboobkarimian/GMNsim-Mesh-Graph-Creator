@@ -31,14 +31,15 @@ def get_sim_nodes():
     globalinfo.reset_connected_nodes()
     if not is_sim_running():
         return None, None
-    bus = dbus.SessionBus()
+    bus = dbus.SystemBus()
     interface_name = 'com.silabs.Wisun.BorderRouter'
     object_path = '/com/silabs/Wisun/BorderRouter'
     property_name = 'Nodes'
     try:
         proxy_obj = bus.get_object(interface_name, object_path)
-    except:
+    except Exception as e:
         print("Error: Could not connect to the border router")
+        print(str(e))
         #tk.messagebox.showerror(title="D-BUS error", message="Could not connect to the border router. Is simulation running?")
         return None, None
     interface = dbus.Interface(proxy_obj, dbus_interface='org.freedesktop.DBus.Properties')
@@ -85,7 +86,7 @@ class GlobalInfo:
         self.connected_nodes = 0
         self.sim_settings = dict()
         self.conn_timestamp = dict()
-    
+
     def set_total_nodes(self, num_nodes):
         self.total_nodes = num_nodes
 
@@ -100,17 +101,17 @@ class GlobalInfo:
 
     def get_total_nodes(self):
         return self.total_nodes
-    
+
     def get_connected_nodes(self):
         return self.connected_nodes
-    
+
     def init_sim_settings(self):
         self.sim_settings = {'varTundev': tk.IntVar(value=1), 'varNano': tk.IntVar(value=1),
                 'varRadio': tk.IntVar(value=1), 'varLog': "e.g: 1,5,6,50",
                 'varCleartmp': tk.IntVar(value=1), 'varTunip': "fd12:3456::1/64",
                 'sim_path': ""}
-    
-    def set_sim_settings(self, sw_config): 
+
+    def set_sim_settings(self, sw_config):
         self.sim_settings['varTundev'].set(sw_config['varTundev'])
         self.sim_settings['varNano'].set(sw_config['varNano'])
         self.sim_settings['varRadio'].set(sw_config['varRadio'])
@@ -125,23 +126,23 @@ class GlobalInfo:
 
     def get_sim_settings(self):
         return self.sim_settings
-    
+
     def set_ref_timestamp(self, timestamp):
         if 'ref' not in self.conn_timestamp.keys():
             self.conn_timestamp['ref'] = timestamp
-    
+
     def set_nodes_timestamp(self, nodes, timestamp):
         for a_node in nodes:
             if a_node not in self.conn_timestamp.keys():
                 self.conn_timestamp[a_node] = timestamp
-    
+
     def get_all_timestamp(self):
         return self.conn_timestamp
 
     def del_node_timestamp(self, node):
         if node in self.conn_timestamp.keys():
             del self.conn_timestamp[node]
-    
+
     def del_all_timestamp(self):
         self.conn_timestamp.clear()
 ############################################################
@@ -348,7 +349,7 @@ class GBuilder:
                     n.clicked_down()
                     self.selectedNode = n
                     self.connecting = True
-    
+
     def canvas_mouseDoubleClick(self, event):
         # move node to new position
         for n in self.nodes:
@@ -375,7 +376,7 @@ class GBuilder:
                         line1, line2 = self.draw_line(self.nodes[e[0]].x, self.nodes[e[0]].y, self.nodes[e[1]].x, self.nodes[e[1]].y)
                         e[2] = line1
                         e[3] = line2
-                
+
                 n.reset_click()
 
     def canvas_ctrlMouseRightClick(self, event):
@@ -474,7 +475,7 @@ class GBuilder:
             edge = [e[0],e[1], line1, line2]
             self.edges.append(edge)
         globalinfo.set_total_nodes(num_raw_nodes)
-    
+
 
     def get_graph_diameter_from_edges(self):
         if len(self.edges) == 0:
@@ -485,7 +486,7 @@ class GBuilder:
         else:
             edges =[(x, y) for x, y in self.edges]
         return GrphDiameter(edges)
-    
+
 
     def change_labels_to_hex(self):
         if not self.id_textMode:
@@ -575,19 +576,19 @@ class ConfigDialog(tk.Toplevel):
         self.log = En(sim_frame)
         self.log.insert(0, VarLog)
         self.log.pack(padx=5, pady=10, side=tk.LEFT)
-        
+
         Nano = Cb(sim_frame, text="IP stack log", variable=self.varNano)
         Nano.pack(padx=1, pady=10, side=tk.LEFT)
-        
+
         Radio = Cb(sim_frame, text="MAC/RF log", variable=self.varRadio, bg=_BG, fg=_FG)
         Radio.pack(padx=1, pady=10, side=tk.LEFT)
-        
+
         Cleartmp = Cb(sim_frame, text="Clear /tmp logs", variable=self.varCleartmp, bg=_BG, fg=_FG)
         Cleartmp.pack(padx=1, pady=10, side=tk.LEFT)
 
         sim_frame1 = tk.Frame(self, bg = _BG)
         sim_frame1.pack(side=tk.TOP, padx=5, anchor=tk.NW)
-        
+
         Tundev = Cb(sim_frame1, text="Create TUN interface", variable=self.varTundev, bg=_BG, fg=_FG)
         Tundev.pack(padx=1, pady=10, side=tk.LEFT)
         Tuniplbl = Lb(sim_frame1, text="TUN IP:")
@@ -668,7 +669,7 @@ class PlotDialog(tk.Toplevel):
 
         # update the graph every 1 sec
         self.update_graph()
-        
+
     def export_dag(self):
         gnodes, gedges = get_sim_nodes()
         if len(gedges):
@@ -680,7 +681,7 @@ class PlotDialog(tk.Toplevel):
                     f.write(f"{_edges}\n")
         else:
             print("No edges available yet ... try again later")
-    
+
     def update_graph(self):
         self.canvas.delete("all")
         pos, CVS_W, CVS_H = self.get_pos_w_h()
@@ -713,7 +714,7 @@ class PlotDialog(tk.Toplevel):
         self.canvas.tag_lower(line1)
         self.canvas.tag_lower(line2)
         return line1, line2
-    
+
     def draw_node(self, x, y, name):
         tname = name
         ncolor = "grey10"
@@ -800,7 +801,7 @@ def main():
     def retrive_sim_info():
     # Check the number of MAC/PHY processes as TOTAL_NODES:
         if is_sim_running():
-            
+
             answer = tk.messagebox.askyesno("A simulation found running.","Do you want to retrieve its information?")
             if answer:
                 filename = "/tmp/graph.txt"
@@ -825,7 +826,7 @@ def main():
                 if [e2, e1] not in edges:
                     edges.append([e1, e2])
             builder.draw_graph_from_list(nodes, edges)
-            
+
 
     def on_window_close():
         sim_settings = globalinfo.get_sim_settings()
@@ -1016,7 +1017,7 @@ def main():
             ax.yaxis.grid(True, color='#EEEEEE')
             ax.xaxis.grid(False)
             ax.set_title('Connection time for each node')
-            
+
             ncls = builder.get_graph_diameter_from_edges()
             print(ncls)
             X = np.array(yy).reshape(-1, 1)
@@ -1045,7 +1046,7 @@ def main():
             MeshPlotGetPosGetDag(gedges, False, False)
         else:
             open_plot_dialog()
-    
+
     def open_plot_dialog():
         global plotd
         if plotd is not None:
@@ -1053,7 +1054,7 @@ def main():
         plotd = PlotDialog(_root)
         #plotd.grab_set()
         #_root.wait_window(plotd)
-    
+
     def update_status_progress_bar():
         all_nodes.config(text=str(globalinfo.get_connected_nodes())+"/"+str(globalinfo.get_total_nodes()))
         progress_bar.config(value=globalinfo.get_connected_nodes(), maximum=globalinfo.get_total_nodes())
@@ -1088,7 +1089,7 @@ def main():
             nminnum.config(state=tk.DISABLED)
             nmaxnum.config(state=tk.DISABLED)
             accuratelbl.config(state=tk.DISABLED)
-    
+
     def _import():
         builder.import_graph()
         update_status_progress_bar()
@@ -1172,7 +1173,7 @@ def main():
     rbgemode2 = Rb(rnd_sub_frame0, text="Semi-Managed", variable=genmode, value="Semi-Managed", width=12, anchor=tk.W, command=update_gen_mode)
     rbgemode1.pack(pady=4, side=tk.BOTTOM)
     rbgemode2.pack(pady=4, side=tk.BOTTOM)
-    
+
     nSimNodeslbl = Lb(rnd_sub_frame1, text="Nodes:", width=7)
     nSimNodeslbl.pack(padx=5, pady=0, side=tk.LEFT)
     nSimNodes = En(rnd_sub_frame1, width=5)
